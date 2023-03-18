@@ -1,8 +1,5 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import Footer1 from '../components/Header/index';
 
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 ---
@@ -16,14 +13,16 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
     />
   </head>
   <body>
-    <Header title={SITE_TITLE} />
-    <main>
-      <Footer1
-        count={1}
-        client:visible>
-        <h1>🧑‍🚀 Hello, Astronaut!</h1>
-      </Footer1>
+    <main class="container mx-auto px-4 pt-10 space-y-5">
+      <h1 class="text-xl font-black">{SITE_TITLE}</h1>
+      <p>{SITE_DESCRIPTION}</p>
+      <p>
+        Welcome follow my <a
+          class="font-extralight text-blue-500"
+          href="https://github.com/sogud"
+          >github!</a
+        >
+      </p>
     </main>
-    <!-- <Footer /> -->
   </body>
 </html>
