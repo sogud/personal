@@ -1,0 +1,29 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Sidebar from '../components/Sidebar.astro';
+
+const { frontmatter } = Astro.props;
+const { title, description } = frontmatter;
+---
+
+<html lang="zh-CN">
+  <head>
+    <BaseHead 
+      title={`${title} - Alex Chen`}
+      description={description}
+      type="website"
+    />
+  </head>
+  <body>
+    <div class="layout">
+      <Sidebar />
+      <main class="main-content">
+        <article class="blog-post">
+          <div class="content">
+            <slot />
+          </div>
+        </article>
+      </main>
+    </div>
+  </body>
+</html>

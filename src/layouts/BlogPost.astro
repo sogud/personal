@@ -1,47 +1,65 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import Sidebar from '../components/Sidebar.astro';
+import BackToTop from '../components/BackToTop.astro';
+import ReadingProgress from '../components/ReadingProgress.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+
+// 获取文章内容以提取标题
+const { headings } = await Astro.props.render?.() || { headings: [] };
 ---
 
-<html lang="en">
-	<head>
-		<BaseHead title={title} description={description} />
-		<style>
-			.title {
-				font-size: 2em;
-				margin: 0.25em 0 0;
-			}
-			hr {
-				border-top: 1px solid #ddd;
-				margin: 1rem 0;
-			}
-		</style>
-	</head>
-
-	<body>
-		<Header />
-		<main>
-			<article>
-				{heroImage && <img width={720} height={360} src={heroImage} alt="" />}
-				<h1 class="title">{title}</h1>
-				{pubDate && <time>{pubDate}</time>}
-				{
-					updatedDate && (
-						<div>
-							Last updated on <time>{updatedDate}</time>
-						</div>
-					)
-				}
-				<hr />
-				<slot />
-			</article>
-		</main>
-		<Footer />
-	</body>
+<html lang="zh-CN">
+  <head>
+    <BaseHead 
+      title={`${title} - Alex Chen`}
+      description={description}
+      type="article"
+      publishedTime={pubDate.toISOString()}
+      modifiedTime={updatedDate?.toISOString()}
+      image={heroImage}
+      tags={['技术', '编程', '前端']}
+    />
+  </head>
+  <body>
+    <ReadingProgress />
+    <div class="layout">
+      <Sidebar />
+      <main class="main-content">
+        <article class="blog-post">
+          <h1>{title}</h1>
+          <div class="meta">
+            <time datetime={pubDate.toISOString()}>
+              {pubDate.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </time>
+            {updatedDate && (
+              <span> · 更新于 
+                <time datetime={updatedDate?.toISOString()}>
+                  {updatedDate?.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </time>
+              </span>
+            )}
+          </div>
+          <TableOfContents headings={headings} />
+          <div class="content">
+            <slot />
+          </div>
+        </article>
+      </main>
+    </div>
+    <BackToTop />
+  </body>
 </html>

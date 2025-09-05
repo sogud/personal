@@ -1,0 +1,64 @@
+---
+interface Props {
+  code: string;
+  language?: string;
+  title?: string;
+}
+
+const { code, language = 'text', title } = Astro.props;
+---
+
+<div class="code-block-wrapper">
+  {title && <div class="code-title">{title}</div>}
+  <pre class={`language-${language}`}><code>{code}</code></pre>
+  <button class="copy-button" data-code={code}>复制</button>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const copyButtons = document.querySelectorAll('.copy-button');
+    
+    copyButtons.forEach(button => {
+      button.addEventListener('click', async () => {
+        const code = button.getAttribute('data-code');
+        if (!code) return;
+        
+        try {
+          await navigator.clipboard.writeText(code);
+          button.textContent = '已复制';
+          button.classList.add('copied');
+          
+          setTimeout(() => {
+            button.textContent = '复制';
+            button.classList.remove('copied');
+          }, 2000);
+        } catch (err) {
+          console.error('复制失败:', err);
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .code-block-wrapper {
+    position: relative;
+    margin: 1.5rem 0;
+  }
+
+  .code-title {
+    background: #2d2d2d;
+    color: #d4d4d4;
+    padding: 0.75rem 1.5rem;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #333;
+    border-bottom: none;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  }
+
+  .code-title + pre {
+    margin-top: 0;
+    border-top: none;
+  }
+</style>

@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://your-domain.com/sitemap-index.xml
+
+# 禁止爬取草稿和临时文件
+Disallow: /drafts/
+Disallow: /*.tmp
+Disallow: /admin/
+
+# 允许常见的搜索引擎
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# 爬取延迟（可选）
+Crawl-delay: 1
