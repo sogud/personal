@@ -1,5 +1,5 @@
 {
-	"name": "blue-binary",
+	"name": "personal-website",
 	"type": "module",
 	"version": "0.0.1",
 	"scripts": {
@@ -7,7 +7,8 @@
 		"start": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
-		"astro": "astro"
+		"astro": "astro",
+		"deploy": "npx wrangler pages deploy dist"
 	},
 	"dependencies": {
 		"@astrojs/mdx": "^0.16.0",
