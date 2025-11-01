@@ -1,0 +1,29 @@
+{
+  "name": "Sogud.me - 技术博客",
+  "short_name": "Sogud.me",
+  "description": "专注于前端开发、全栈技术和编程实践的技术博客",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1f2937",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["technology", "education", "productivity"],
+  "screenshots": [
+    {
+      "src": "/placeholder-hero.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
+  ]
+}

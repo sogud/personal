@@ -24,7 +24,7 @@ const {
 	type = 'website',
 	publishedTime,
 	modifiedTime,
-	author = 'Alex Chen',
+	author = 'Sogud',
 	tags = []
 } = Astro.props;
 ---
@@ -35,6 +35,11 @@ const {
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <meta name="generator" content={Astro.generator} />
 <meta name="author" content={author} />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+<meta name="googlebot" content="index, follow" />
+<meta name="bingbot" content="index, follow" />
+<meta name="theme-color" content="#1f2937" />
+<meta name="msapplication-TileColor" content="#1f2937" />
 {tags.length > 0 && <meta name="keywords" content={tags.join(', ')} />}
 
 <!-- Canonical URL -->
@@ -51,8 +56,12 @@ const {
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={new URL(image, Astro.url)} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={title} />
 <meta property="og:site_name" content={SITE_TITLE} />
 <meta property="og:locale" content="zh_CN" />
+<meta property="og:locale:alternate" content="en_US" />
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 {author && <meta property="article:author" content={author} />}
@@ -64,39 +73,63 @@ const {
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
 <meta property="twitter:image" content={new URL(image, Astro.url)} />
-<meta property="twitter:creator" content="@your_twitter" />
+<meta property="twitter:image:alt" content={title} />
+<meta property="twitter:creator" content="@sogud" />
+<meta property="twitter:site" content="@sogud" />
 
 <!-- JSON-LD Structured Data -->
-<script type="application/ld+json">
-{
-  JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": type === 'article' ? "BlogPosting" : "WebSite",
-    "headline": title,
-    "description": description,
-    "image": new URL(image, Astro.url),
-    "url": canonicalURL,
-    "datePublished": publishedTime,
-    "dateModified": modifiedTime || publishedTime,
-    "author": {
-      "@type": "Person",
-      "name": author,
-      "url": Astro.site
-    },
-    "publisher": {
-      "@type": "Person",
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": type === 'article' ? "BlogPosting" : "WebSite",
+  "headline": title,
+  "description": description,
+  "image": new URL(image, Astro.url).toString(),
+  "url": canonicalURL.toString(),
+  "datePublished": publishedTime,
+  "dateModified": modifiedTime || publishedTime,
+  "author": {
+    "@type": "Person",
+    "name": author,
+    "url": Astro.site?.toString(),
+    "sameAs": [
+      "https://github.com/sogud",
+      "https://twitter.com/sogud"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": SITE_TITLE,
+    "url": Astro.site?.toString(),
+    "logo": {
+      "@type": "ImageObject",
+      "url": new URL("/favicon.svg", Astro.url).toString()
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": canonicalURL.toString()
+  },
+  ...(type === 'article' && {
+    "keywords": tags.join(', '),
+    "articleSection": "Technology",
+    "inLanguage": "zh-CN",
+    "wordCount": description.length,
+    "isPartOf": {
+      "@type": "Blog",
       "name": SITE_TITLE,
-      "url": Astro.site
-    },
-    ...(type === 'article' && {
-      "keywords": tags.join(', '),
-      "articleSection": "Technology",
-      "inLanguage": "zh-CN"
-    }),
-    ...(type === 'website' && {
-      "name": SITE_TITLE,
-      "alternateName": "Alex Chen's Blog"
-    })
+      "url": Astro.site?.toString()
+    }
+  }),
+  ...(type === 'website' && {
+    "name": SITE_TITLE,
+    "alternateName": "Sogud's Tech Blog",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${Astro.site?.toString()}/blog/?q={search_term_string}`
+      },
+      "query-input": "required name=search_term_string"
+    }
   })
-}
-</script>
+})} />

@@ -1,0 +1,331 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import SEOHead from '../../components/SEOHead.astro';
+import PerformanceOptimizer from '../../components/PerformanceOptimizer.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import PhotographyGallery from '../../components/PhotographyGallery.astro';
+import PhotographyDetails from '../../components/PhotographyDetails.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const photography = await getCollection('photography', ({ data }) => {
+    return !data.draft;
+  });
+  
+  return photography.map((item) => ({
+    params: { slug: item.slug },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+const { title, description, images, location, camera, lens, settings, category, tags, pubDate } = item.data;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead 
+      title={`${title} - 摄影作品 - ${SITE_TITLE}`}
+      description={description}
+      type="article"
+      publishedTime={pubDate.toISOString()}
+      image={images[0]?.src}
+      tags={tags}
+    />
+    <SEOHead 
+      title={`${title} - 摄影作品 - ${SITE_TITLE}`}
+      description={description}
+      type="article"
+      publishedTime={pubDate.toISOString()}
+      image={images[0]?.src}
+      tags={tags}
+    />
+    <PerformanceOptimizer />
+  </head>
+  <body>
+    <div class="layout">
+      <Sidebar />
+      <main class="main-content">
+        <article class="photography-detail">
+          <!-- 返回链接 -->
+          <nav class="breadcrumb">
+            <a href="/photography/" class="back-link">
+              ← 返回摄影作品
+            </a>
+          </nav>
+
+          <!-- 作品标题 -->
+          <header class="photography-header">
+            <h1 class="photography-title">{title}</h1>
+            <p class="photography-description">{description}</p>
+            <div class="photography-meta">
+              <time datetime={pubDate.toISOString()} class="publish-date">
+                {pubDate.toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </time>
+              {category && <span class="category-tag">{category}</span>}
+            </div>
+          </header>
+
+          <!-- 图片画廊 -->
+          <section class="gallery-section">
+            <PhotographyGallery images={images} />
+          </section>
+
+          <!-- 拍摄详情 -->
+          <section class="details-section">
+            <PhotographyDetails 
+              location={location}
+              camera={camera}
+              lens={lens}
+              settings={settings}
+            />
+          </section>
+
+          <!-- 作品内容 -->
+          <section class="content-section">
+            <div class="content">
+              <slot />
+            </div>
+          </section>
+
+          <!-- 标签 -->
+          {tags && tags.length > 0 && (
+            <section class="tags-section">
+              <h3 class="tags-title">标签</h3>
+              <div class="tags-list">
+                {tags.map(tag => (
+                  <span class="tag">{tag}</span>
+                ))}
+              </div>
+            </section>
+          )}
+        </article>
+      </main>
+    </div>
+
+    <style>
+      .photography-detail {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 0;
+      }
+
+      .breadcrumb {
+        margin-bottom: 2rem;
+      }
+
+      .back-link {
+        color: #6b7280;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      .back-link:hover {
+        color: #374151;
+      }
+
+      .photography-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .photography-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #1f2937;
+        line-height: 1.2;
+      }
+
+      .photography-description {
+        font-size: 1.125rem;
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .photography-meta {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .publish-date {
+        color: #9ca3af;
+        font-size: 0.875rem;
+      }
+
+      .category-tag {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .gallery-section {
+        margin-bottom: 3rem;
+      }
+
+      .details-section {
+        margin-bottom: 3rem;
+      }
+
+      .content-section {
+        margin-bottom: 3rem;
+      }
+
+      .content {
+        max-width: 800px;
+        margin: 0 auto;
+        font-size: 1.125rem;
+        line-height: 1.7;
+        color: #374151;
+      }
+
+      .content h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 2rem 0 1rem 0;
+        color: #1f2937;
+      }
+
+      .content h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 1.5rem 0 0.75rem 0;
+        color: #1f2937;
+      }
+
+      .content p {
+        margin-bottom: 1rem;
+      }
+
+      .content ul, .content ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+      }
+
+      .content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .tags-section {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 2rem;
+      }
+
+      .tags-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #1f2937;
+      }
+
+      .tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .tag {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      /* 深色模式 */
+      @media (prefers-color-scheme: dark) {
+        .back-link {
+          color: #9ca3af;
+        }
+
+        .back-link:hover {
+          color: #f9fafb;
+        }
+
+        .photography-header {
+          border-bottom-color: #374151;
+        }
+
+        .photography-title {
+          color: #f9fafb;
+        }
+
+        .photography-description {
+          color: #d1d5db;
+        }
+
+        .publish-date {
+          color: #9ca3af;
+        }
+
+        .category-tag {
+          background: #374151;
+          color: #d1d5db;
+        }
+
+        .content {
+          color: #d1d5db;
+        }
+
+        .content h2,
+        .content h3 {
+          color: #f9fafb;
+        }
+
+        .tags-section {
+          border-top-color: #374151;
+        }
+
+        .tags-title {
+          color: #f9fafb;
+        }
+
+        .tag {
+          background: #374151;
+          color: #d1d5db;
+        }
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 768px) {
+        .photography-detail {
+          padding: 1rem 0;
+        }
+
+        .photography-title {
+          font-size: 2rem;
+        }
+
+        .photography-description {
+          font-size: 1rem;
+        }
+
+        .photography-meta {
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+      }
+    </style>
+  </body>
+</html>

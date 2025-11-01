@@ -1,0 +1,185 @@
+---
+import { SITE_TITLE, SITE_DESCRIPTION, SITE_URL } from '../consts';
+
+export interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+  tags?: string[];
+  noindex?: boolean;
+}
+
+const {
+  title = SITE_TITLE,
+  description = SITE_DESCRIPTION,
+  image = '/placeholder-social.jpg',
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+  author = 'Sogud',
+  tags = [],
+  noindex = false
+} = Astro.props;
+
+const fullTitle = title === SITE_TITLE ? title : `${title} - ${SITE_TITLE}`;
+const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
+---
+
+<!-- SEO 优化元数据 -->
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<meta name="author" content={author} />
+
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- 关键词 -->
+{tags.length > 0 && <meta name="keywords" content={tags.join(', ')} />}
+
+<!-- 语言 -->
+<meta name="language" content="zh-CN" />
+
+<!-- 地理标签 -->
+<meta name="geo.region" content="CN" />
+<meta name="geo.placename" content="China" />
+
+<!-- 分类 -->
+<meta name="category" content="Technology" />
+
+<!-- 版权 -->
+<meta name="copyright" content={`© ${new Date().getFullYear()} ${SITE_TITLE}`} />
+
+<!-- 重新访问 -->
+<meta name="revisit-after" content="7 days" />
+
+<!-- 分发 -->
+<meta name="distribution" content="global" />
+
+<!-- 评级 -->
+<meta name="rating" content="general" />
+
+<!-- 应用名称 -->
+<meta name="application-name" content={SITE_TITLE} />
+
+<!-- 移动优化 -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content={SITE_TITLE} />
+
+<!-- 微软应用 -->
+<meta name="msapplication-TileColor" content="#1f2937" />
+<meta name="msapplication-config" content="/browserconfig.xml" />
+
+<!-- 预连接优化 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<!-- DNS 预取 -->
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="dns-prefetch" href="//fonts.gstatic.com" />
+
+<!-- 规范链接 -->
+<link rel="canonical" href={canonicalURL} />
+
+<!-- 备用语言 -->
+<link rel="alternate" hreflang="zh-CN" href={canonicalURL} />
+<link rel="alternate" hreflang="x-default" href={canonicalURL} />
+
+<!-- Open Graph 增强 -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={new URL(image, SITE_URL)} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={fullTitle} />
+<meta property="og:site_name" content={SITE_TITLE} />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:locale:alternate" content="en_US" />
+
+{type === 'article' && publishedTime && (
+  <meta property="article:published_time" content={publishedTime} />
+)}
+{type === 'article' && modifiedTime && (
+  <meta property="article:modified_time" content={modifiedTime} />
+)}
+{type === 'article' && author && (
+  <meta property="article:author" content={author} />
+)}
+{type === 'article' && tags.map(tag => (
+  <meta property="article:tag" content={tag} />
+))}
+
+<!-- Twitter 增强 -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalURL} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={new URL(image, SITE_URL)} />
+<meta name="twitter:image:alt" content={fullTitle} />
+<meta name="twitter:creator" content="@sogud" />
+<meta name="twitter:site" content="@sogud" />
+
+<!-- 结构化数据 -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": type === 'article' ? "BlogPosting" : "WebSite",
+  "headline": fullTitle,
+  "description": description,
+  "image": new URL(image, SITE_URL).toString(),
+  "url": canonicalURL.toString(),
+  "datePublished": publishedTime,
+  "dateModified": modifiedTime || publishedTime,
+  "author": {
+    "@type": "Person",
+    "name": author,
+    "url": SITE_URL,
+    "sameAs": [
+      "https://github.com/sogud",
+      "https://twitter.com/sogud"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": SITE_TITLE,
+    "url": SITE_URL,
+    "logo": {
+      "@type": "ImageObject",
+      "url": new URL("/favicon.svg", SITE_URL).toString(),
+      "width": 32,
+      "height": 32
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": canonicalURL.toString()
+  },
+  ...(type === 'article' && {
+    "keywords": tags.join(', '),
+    "articleSection": "Technology",
+    "inLanguage": "zh-CN",
+    "wordCount": description.length,
+    "isPartOf": {
+      "@type": "Blog",
+      "name": SITE_TITLE,
+      "url": SITE_URL
+    }
+  }),
+  ...(type === 'website' && {
+    "name": SITE_TITLE,
+    "alternateName": "Sogud's Tech Blog",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${SITE_URL}/blog/?q={search_term_string}`
+      },
+      "query-input": "required name=search_term_string"
+    }
+  })
+})} />

@@ -6,7 +6,7 @@ import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://your-domain.com', // 替换为你的实际域名
+  site: 'https://sogud.me', // 您的域名
   integrations: [
     mdx(), 
     sitemap({

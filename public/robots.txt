@@ -1,23 +1,17 @@
 User-agent: *
 Allow: /
 
-# Sitemap
-Sitemap: https://your-domain.com/sitemap-index.xml
+# 主要页面
+Allow: /blog/
+Allow: /about/
 
-# 禁止爬取草稿和临时文件
-Disallow: /drafts/
-Disallow: /*.tmp
-Disallow: /admin/
+# 禁止访问的目录
+Disallow: /api/
+Disallow: /_astro/
 
-# 允许常见的搜索引擎
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Slurp
-Allow: /
+# Sitemap 位置
+Sitemap: https://sogud.me/sitemap-index.xml
+Sitemap: https://sogud.me/sitemap-0.xml
 
 # 爬取延迟（可选）
 Crawl-delay: 1

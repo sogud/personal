@@ -1,0 +1,213 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import SEOHead from '../../components/SEOHead.astro';
+import PerformanceOptimizer from '../../components/PerformanceOptimizer.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import PhotographyGrid from '../../components/PhotographyGrid.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+
+const allPhotography = await getCollection('photography', ({ data }) => {
+  return !data.draft;
+});
+
+// 按日期排序，最新的在前
+const photography = allPhotography.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// 获取所有分类
+const categories = [...new Set(photography.map(item => item.data.category).filter(Boolean))];
+
+// 获取精选作品
+const featured = photography.filter(item => item.data.featured);
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead 
+      title={`摄影作品 - ${SITE_TITLE}`}
+      description="展示我的摄影作品，包括风景、人像、街拍等不同类型的摄影创作"
+      type="website"
+      tags={['摄影', '作品集', '风景', '人像', '街拍', '艺术']}
+    />
+    <SEOHead 
+      title={`摄影作品 - ${SITE_TITLE}`}
+      description="展示我的摄影作品，包括风景、人像、街拍等不同类型的摄影创作"
+      type="website"
+      tags={['摄影', '作品集', '风景', '人像', '街拍', '艺术']}
+    />
+    <PerformanceOptimizer />
+  </head>
+  <body>
+    <div class="layout">
+      <Sidebar />
+      <main class="main-content">
+        <header class="photography-header">
+          <h1 class="page-title">摄影作品</h1>
+          <p class="page-description">
+            用镜头记录生活中的美好瞬间，分享我对世界的观察和感受
+          </p>
+        </header>
+
+        <!-- 精选作品 -->
+        {featured.length > 0 && (
+          <section class="featured-section">
+            <h2 class="section-title">精选作品</h2>
+            <PhotographyGrid items={featured.slice(0, 6)} featured={true} />
+          </section>
+        )}
+
+        <!-- 分类导航 -->
+        <section class="categories-section">
+          <h2 class="section-title">按分类浏览</h2>
+          <div class="category-filters">
+            <button class="filter-btn active" data-category="all">全部</button>
+            {categories.map(category => (
+              <button class="filter-btn" data-category={category}>{category}</button>
+            ))}
+          </div>
+        </section>
+
+        <!-- 所有作品 -->
+        <section class="all-photography-section">
+          <h2 class="section-title">所有作品</h2>
+          <PhotographyGrid items={photography} />
+        </section>
+      </main>
+    </div>
+
+    <script>
+      // 分类筛选功能
+      document.addEventListener('DOMContentLoaded', function() {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const photographyItems = document.querySelectorAll('.photography-item');
+
+        filterButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const category = this.dataset.category;
+            
+            // 更新按钮状态
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // 筛选作品
+            photographyItems.forEach(item => {
+              const itemCategory = item.dataset.category;
+              if (category === 'all' || itemCategory === category) {
+                item.style.display = 'block';
+                item.style.animation = 'fadeIn 0.3s ease-in-out';
+              } else {
+                item.style.display = 'none';
+              }
+            });
+          });
+        });
+      });
+    </script>
+
+    <style>
+      .photography-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem 0;
+      }
+
+      .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .page-description {
+        font-size: 1.2rem;
+        color: #6b7280;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+      }
+
+      .featured-section {
+        margin-bottom: 4rem;
+      }
+
+      .categories-section {
+        margin-bottom: 3rem;
+      }
+
+      .category-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+
+      .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e5e7eb;
+        background: white;
+        color: #374151;
+        border-radius: 2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      .filter-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-2px);
+      }
+
+      .filter-btn.active {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+      }
+
+      .section-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: #1f2937;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .page-description {
+          color: #9ca3af;
+        }
+        
+        .section-title {
+          color: #f9fafb;
+        }
+        
+        .filter-btn {
+          background: #374151;
+          border-color: #4b5563;
+          color: #f9fafb;
+        }
+        
+        .filter-btn:hover {
+          border-color: #667eea;
+          color: #667eea;
+        }
+      }
+    </style>
+  </body>
+</html>

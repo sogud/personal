@@ -1,0 +1,234 @@
+---
+interface Settings {
+  iso?: number;
+  aperture?: string;
+  shutterSpeed?: string;
+  focalLength?: string;
+}
+
+interface Props {
+  location?: string;
+  camera?: string;
+  lens?: string;
+  settings?: Settings;
+}
+
+const { location, camera, lens, settings } = Astro.props;
+---
+
+<div class="photography-details">
+  <h3 class="details-title">拍摄信息</h3>
+  <div class="details-grid">
+    {location && (
+      <div class="detail-item">
+        <div class="detail-icon">📍</div>
+        <div class="detail-content">
+          <div class="detail-label">拍摄地点</div>
+          <div class="detail-value">{location}</div>
+        </div>
+      </div>
+    )}
+
+    {camera && (
+      <div class="detail-item">
+        <div class="detail-icon">📷</div>
+        <div class="detail-content">
+          <div class="detail-label">相机</div>
+          <div class="detail-value">{camera}</div>
+        </div>
+      </div>
+    )}
+
+    {lens && (
+      <div class="detail-item">
+        <div class="detail-icon">🔍</div>
+        <div class="detail-content">
+          <div class="detail-label">镜头</div>
+          <div class="detail-value">{lens}</div>
+        </div>
+      </div>
+    )}
+
+    {settings && (
+      <>
+        {settings.iso && (
+          <div class="detail-item">
+            <div class="detail-icon">⚡</div>
+            <div class="detail-content">
+              <div class="detail-label">ISO</div>
+              <div class="detail-value">{settings.iso}</div>
+            </div>
+          </div>
+        )}
+
+        {settings.aperture && (
+          <div class="detail-item">
+            <div class="detail-icon">🕳️</div>
+            <div class="detail-content">
+              <div class="detail-label">光圈</div>
+              <div class="detail-value">f/{settings.aperture}</div>
+            </div>
+          </div>
+        )}
+
+        {settings.shutterSpeed && (
+          <div class="detail-item">
+            <div class="detail-icon">⏱️</div>
+            <div class="detail-content">
+              <div class="detail-label">快门速度</div>
+              <div class="detail-value">{settings.shutterSpeed}</div>
+            </div>
+          </div>
+        )}
+
+        {settings.focalLength && (
+          <div class="detail-item">
+            <div class="detail-icon">📏</div>
+            <div class="detail-content">
+              <div class="detail-label">焦距</div>
+              <div class="detail-value">{settings.focalLength}</div>
+            </div>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+</div>
+
+<style>
+  .photography-details {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 2rem 0;
+  }
+
+  .details-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #1f2937;
+    text-align: center;
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .detail-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .detail-icon {
+    font-size: 1.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .detail-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .detail-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  .detail-value {
+    font-size: 1rem;
+    color: #1f2937;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  /* 深色模式 */
+  @media (prefers-color-scheme: dark) {
+    .photography-details {
+      background: #1f2937;
+    }
+
+    .details-title {
+      color: #f9fafb;
+    }
+
+    .detail-item {
+      background: #374151;
+    }
+
+    .detail-icon {
+      background: #4b5563;
+    }
+
+    .detail-label {
+      color: #9ca3af;
+    }
+
+    .detail-value {
+      color: #f9fafb;
+    }
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .photography-details {
+      padding: 1.5rem;
+    }
+
+    .details-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .detail-item {
+      padding: 0.75rem;
+    }
+
+    .detail-icon {
+      font-size: 1.25rem;
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .detail-label {
+      font-size: 0.8rem;
+    }
+
+    .detail-value {
+      font-size: 0.9rem;
+    }
+  }
+
+  /* 特殊布局 - 当只有少量信息时 */
+  .details-grid:has(.detail-item:nth-child(1):nth-last-child(2)) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .details-grid:has(.detail-item:nth-child(1):nth-last-child(1)) {
+    grid-template-columns: 1fr;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+</style>

@@ -1,5 +1,7 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
+import SEOHead from '../components/SEOHead.astro';
+import PerformanceOptimizer from '../components/PerformanceOptimizer.astro';
 import Sidebar from '../components/Sidebar.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 import { getCollection } from 'astro:content';
@@ -15,10 +17,18 @@ const posts = (await getCollection('blog', ({ data }) => {
 <html lang="zh-CN">
   <head>
     <BaseHead 
-      title={`${SITE_TITLE} - ${SITE_DESCRIPTION}`}
+      title={SITE_TITLE}
       description={SITE_DESCRIPTION}
       type="website"
+      tags={['技术博客', '前端开发', '全栈开发', '编程', 'JavaScript', 'React', 'Astro']}
     />
+    <SEOHead 
+      title={SITE_TITLE}
+      description={SITE_DESCRIPTION}
+      type="website"
+      tags={['技术博客', '前端开发', '全栈开发', '编程', 'JavaScript', 'React', 'Astro']}
+    />
+    <PerformanceOptimizer />
   </head>
   <body>
     <div class="layout">
