@@ -2,23 +2,37 @@
 ---
 
 <button id="back-to-top" class="back-to-top" aria-label="回到顶部">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <svg viewBox="0 0 24 24">
     <path d="m18 15-6-6-6 6"/>
   </svg>
 </button>
 
 <script>
-  const backToTopButton = document.getElementById('back-to-top');
-  
-  if (backToTopButton) {
-    // 监听滚动事件
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 300) {
-        backToTopButton.classList.add('visible');
-      } else {
-        backToTopButton.classList.remove('visible');
+  // 使用 requestAnimationFrame 实现高性能滚动监听
+  (function() {
+    const backToTopButton = document.getElementById('back-to-top');
+    if (!backToTopButton) return;
+
+    let ticking = false;
+    let isVisible = false;
+
+    function updateVisibility() {
+      const shouldBeVisible = window.scrollY > 300;
+      
+      if (shouldBeVisible !== isVisible) {
+        backToTopButton.classList.toggle('visible', shouldBeVisible);
+        isVisible = shouldBeVisible;
       }
-    });
+      
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(updateVisibility);
+        ticking = true;
+      }
+    }, { passive: true });
 
     // 点击回到顶部
     backToTopButton.addEventListener('click', () => {
@@ -27,43 +41,8 @@
         behavior: 'smooth'
       });
     });
-  }
+
+    // 初始检查
+    updateVisibility();
+  })();
 </script>
-
-<style>
-  .back-to-top {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 48px;
-    height: 48px;
-    background: white;
-    border: 1px solid #e5e5e5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 1000;
-  }
-
-  .back-to-top:hover {
-    background: #f5f5f5;
-  }
-
-  .back-to-top.visible {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  @media (max-width: 768px) {
-    .back-to-top {
-      bottom: 1rem;
-      right: 1rem;
-      width: 44px;
-      height: 44px;
-    }
-  }
-</style>

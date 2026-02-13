@@ -1,4 +1,5 @@
 ---
+import { ViewTransitions } from 'astro:transitions';
 import BaseHead from '../components/BaseHead.astro';
 import SEOHead from '../components/SEOHead.astro';
 import PerformanceOptimizer from '../components/PerformanceOptimizer.astro';
@@ -29,11 +30,17 @@ const posts = (await getCollection('blog', ({ data }) => {
       tags={['技术博客', '前端开发', '全栈开发', '编程', 'JavaScript', 'React', 'Astro']}
     />
     <PerformanceOptimizer />
+    <ViewTransitions />
   </head>
   <body>
+    <Sidebar />
     <div class="layout">
-      <Sidebar />
       <main class="main-content">
+        <section class="home-intro">
+          <h1>Hello, I'm bamboo.</h1>
+          <p>Software engineer building things for the web. Writing about frontend development, programming, and technology.</p>
+        </section>
+        
         <section class="section">
           <h2 class="section-title">Recent Writing</h2>
           <ul class="item-list">

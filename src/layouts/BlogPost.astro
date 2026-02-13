@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { ViewTransitions } from 'astro:transitions';
 import BaseHead from '../components/BaseHead.astro';
 import Sidebar from '../components/Sidebar.astro';
 import BackToTop from '../components/BackToTop.astro';
@@ -25,11 +26,12 @@ const { headings } = await Astro.props.render?.() || { headings: [] };
       image={heroImage}
       tags={['技术', '编程', '前端', '全栈开发']}
     />
+    <ViewTransitions />
   </head>
   <body>
     <ReadingProgress />
+    <Sidebar />
     <div class="layout">
-      <Sidebar />
       <main class="main-content">
         <article class="blog-post">
           <h1>{title}</h1>

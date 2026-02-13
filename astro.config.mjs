@@ -6,7 +6,7 @@ import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://sogud.me', // 您的域名
+  site: 'https://sogud.me',
   integrations: [
     mdx(), 
     sitemap({
@@ -18,6 +18,9 @@ export default defineConfig({
     react(), 
     tailwind()
   ],
+  experimental: {
+    viewTransitions: true
+  },
   markdown: {
     shikiConfig: {
       theme: 'dark-plus',

@@ -1,29 +1,26 @@
 ---
+import { ViewTransitions } from 'astro:transitions';
 import BaseHead from '../components/BaseHead.astro';
 import Sidebar from '../components/Sidebar.astro';
+import BackToTop from '../components/BackToTop.astro';
 
-const { frontmatter } = Astro.props;
-const { title, description } = frontmatter;
+const { title, description } = Astro.props;
 ---
 
 <html lang="zh-CN">
   <head>
-    <BaseHead 
-      title={`${title} - Alex Chen`}
-      description={description}
-      type="website"
-    />
+    <BaseHead title={title} description={description} />
+    <ViewTransitions />
   </head>
   <body>
+    <Sidebar />
     <div class="layout">
-      <Sidebar />
       <main class="main-content">
         <article class="blog-post">
-          <div class="content">
-            <slot />
-          </div>
+          <slot />
         </article>
       </main>
     </div>
+    <BackToTop />
   </body>
 </html>

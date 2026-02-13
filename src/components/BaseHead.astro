@@ -15,18 +15,30 @@ export interface Props {
 	tags?: string[];
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+// 安全创建 canonicalURL
+let canonicalURL: URL;
+try {
+  const pathname = Astro.url?.pathname || '/';
+  const site = Astro.site || 'https://sogud.me';
+  canonicalURL = new URL(pathname, site);
+} catch (error) {
+  console.error('Error creating canonical URL:', error);
+  canonicalURL = new URL('/', 'https://sogud.me');
+}
 
 const { 
-	title, 
-	description, 
+	title = SITE_TITLE || 'Sogud.me', 
+	description = '', 
 	image = '/placeholder-social.jpg',
 	type = 'website',
 	publishedTime,
 	modifiedTime,
 	author = 'Sogud',
 	tags = []
-} = Astro.props;
+} = Astro.props || {};
+
+// 确保 tags 是数组
+const finalTags = Array.isArray(tags) ? tags : [];
 ---
 
 <!-- Global Metadata -->
@@ -40,10 +52,10 @@ const {
 <meta name="bingbot" content="index, follow" />
 <meta name="theme-color" content="#1f2937" />
 <meta name="msapplication-TileColor" content="#1f2937" />
-{tags.length > 0 && <meta name="keywords" content={tags.join(', ')} />}
+{finalTags.length > 0 && <meta name="keywords" content={finalTags.join(', ')} />}
 
 <!-- Canonical URL -->
-<link rel="canonical" href={canonicalURL} />
+<link rel="canonical" href={canonicalURL.toString()} />
 
 <!-- Primary Meta Tags -->
 <title>{title}</title>
@@ -52,10 +64,10 @@ const {
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={type} />
-<meta property="og:url" content={Astro.url} />
+<meta property="og:url" content={Astro.url?.toString() || canonicalURL.toString()} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image, Astro.url)} />
+<meta property="og:image" content={Astro.url ? new URL(image, Astro.url).toString() : new URL(image, canonicalURL).toString()} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content={title} />
@@ -65,14 +77,14 @@ const {
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 {author && <meta property="article:author" content={author} />}
-{tags.map(tag => <meta property="article:tag" content={tag} />)}
+{finalTags.map(tag => <meta property="article:tag" content={tag} />)}
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content={Astro.url} />
+<meta property="twitter:url" content={Astro.url?.toString() || canonicalURL.toString()} />
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={new URL(image, Astro.url)} />
+<meta property="twitter:image" content={Astro.url ? new URL(image, Astro.url).toString() : new URL(image, canonicalURL).toString()} />
 <meta property="twitter:image:alt" content={title} />
 <meta property="twitter:creator" content="@sogud" />
 <meta property="twitter:site" content="@sogud" />
@@ -83,14 +95,14 @@ const {
   "@type": type === 'article' ? "BlogPosting" : "WebSite",
   "headline": title,
   "description": description,
-  "image": new URL(image, Astro.url).toString(),
+  "image": Astro.url ? new URL(image, Astro.url).toString() : new URL(image, canonicalURL).toString(),
   "url": canonicalURL.toString(),
   "datePublished": publishedTime,
   "dateModified": modifiedTime || publishedTime,
   "author": {
     "@type": "Person",
     "name": author,
-    "url": Astro.site?.toString(),
+    "url": Astro.site?.toString() || canonicalURL.origin,
     "sameAs": [
       "https://github.com/sogud",
       "https://twitter.com/sogud"
@@ -99,10 +111,10 @@ const {
   "publisher": {
     "@type": "Organization",
     "name": SITE_TITLE,
-    "url": Astro.site?.toString(),
+    "url": Astro.site?.toString() || canonicalURL.origin,
     "logo": {
       "@type": "ImageObject",
-      "url": new URL("/favicon.svg", Astro.url).toString()
+      "url": Astro.url ? new URL("/favicon.svg", Astro.url).toString() : new URL("/favicon.svg", canonicalURL).toString()
     }
   },
   "mainEntityOfPage": {
@@ -110,14 +122,14 @@ const {
     "@id": canonicalURL.toString()
   },
   ...(type === 'article' && {
-    "keywords": tags.join(', '),
+    "keywords": finalTags.join(', '),
     "articleSection": "Technology",
     "inLanguage": "zh-CN",
     "wordCount": description.length,
     "isPartOf": {
       "@type": "Blog",
       "name": SITE_TITLE,
-      "url": Astro.site?.toString()
+      "url": Astro.site?.toString() || canonicalURL.origin
     }
   }),
   ...(type === 'website' && {
@@ -127,7 +139,7 @@ const {
       "@type": "SearchAction",
       "target": {
         "@type": "EntryPoint",
-        "urlTemplate": `${Astro.site?.toString()}/blog/?q={search_term_string}`
+        "urlTemplate": `${Astro.site?.toString() || canonicalURL.origin}/blog/?q={search_term_string}`
       },
       "query-input": "required name=search_term_string"
     }

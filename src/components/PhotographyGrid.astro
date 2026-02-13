@@ -17,43 +17,31 @@ const { items, featured = false } = Astro.props;
     return (
       <article class="photography-item" data-category={category}>
         <a href={`/photography/${item.slug}/`} class="photography-link">
-          <div class="image-container">
-            <img
-              src={mainImage.src}
-              alt={mainImage.alt}
-              width={mainImage.width}
-              height={mainImage.height}
-              loading="lazy"
-              class="photography-image"
-            />
+          <div class="image-wrapper">
+            <div class="image-container">
+              <img
+                src={mainImage.src}
+                alt={mainImage.alt}
+                width={mainImage.width}
+                height={mainImage.height}
+                loading="lazy"
+                class="photography-image"
+              />
+            </div>
             <div class="image-overlay">
               <div class="overlay-content">
-                <h3 class="item-title">{title}</h3>
-                <p class="item-description">{description}</p>
-                <div class="item-meta">
-                  {location && <span class="meta-item">📍 {location}</span>}
-                  {camera && <span class="meta-item">📷 {camera}</span>}
-                  {settings?.aperture && <span class="meta-item">f/{settings.aperture}</span>}
-                </div>
+                <h3 class="item-title-overlay">{title}</h3>
+                <time datetime={pubDate.toISOString()} class="publish-date-overlay">
+                  {pubDate.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </time>
               </div>
             </div>
           </div>
         </a>
-        
-        <div class="item-info">
-          <h3 class="item-title">{title}</h3>
-          <p class="item-description">{description}</p>
-          <div class="item-meta">
-            <time datetime={pubDate.toISOString()} class="publish-date">
-              {pubDate.toLocaleDateString('zh-CN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </time>
-            {category && <span class="category-tag">{category}</span>}
-          </div>
-        </div>
       </article>
     );
   })}
@@ -62,49 +50,51 @@ const { items, featured = false } = Astro.props;
 <style>
   .photography-grid {
     display: grid;
-    gap: 2rem;
-    margin-top: 2rem;
+    gap: 2px; /* 极简网格间距 */
+    margin-top: 1rem;
   }
 
   .featured-grid {
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   }
 
   .all-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 
   .photography-item {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
     position: relative;
-  }
-
-  .photography-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    background: #f3f4f6; /* 图片加载前的占位色 */
   }
 
   .photography-link {
     display: block;
+    width: 100%;
+    height: 100%;
     text-decoration: none;
     color: inherit;
   }
 
-  .image-container {
+  .image-wrapper {
     position: relative;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    aspect-ratio: 16/9;
+  }
+
+  .image-container {
+    width: 100%;
+    height: 100%;
   }
 
   .photography-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: block;
   }
 
   .photography-item:hover .photography-image {
@@ -117,11 +107,7 @@ const { items, featured = false } = Astro.props;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.7) 100%
-    );
+    background: rgba(0, 0, 0, 0.3); /* 默认轻微遮罩，让文字可见 */
     opacity: 0;
     transition: opacity 0.3s ease;
     display: flex;
@@ -134,141 +120,60 @@ const { items, featured = false } = Astro.props;
   }
 
   .overlay-content {
-    color: white;
     width: 100%;
+    transform: translateY(10px);
+    transition: transform 0.3s ease;
   }
 
-  .overlay-content .item-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    line-height: 1.3;
+  .photography-item:hover .overlay-content {
+    transform: translateY(0);
   }
 
-  .overlay-content .item-description {
-    font-size: 0.875rem;
-    opacity: 0.9;
-    margin-bottom: 0.75rem;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .overlay-content .item-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    font-size: 0.75rem;
-    opacity: 0.8;
-  }
-
-  .overlay-content .meta-item {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    backdrop-filter: blur(4px);
-  }
-
-  .item-info {
-    padding: 1.5rem;
-  }
-
-  .item-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #1f2937;
-    line-height: 1.4;
-  }
-
-  .item-description {
-    color: #6b7280;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    margin-bottom: 1rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .item-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .publish-date {
-    color: #9ca3af;
-    font-size: 0.875rem;
-  }
-
-  .category-tag {
-    background: #f3f4f6;
-    color: #374151;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
+  .item-title-overlay {
+    font-size: 1.1rem;
     font-weight: 500;
+    margin: 0 0 0.25rem 0;
+    color: white;
+    letter-spacing: 0.01em;
   }
 
-  /* 深色模式 */
+  .publish-date-overlay {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 300;
+  }
+
+  /* 深色模式适配 */
   @media (prefers-color-scheme: dark) {
     .photography-item {
       background: #1f2937;
-    }
-
-    .item-title {
-      color: #f9fafb;
-    }
-
-    .item-description {
-      color: #d1d5db;
-    }
-
-    .publish-date {
-      color: #9ca3af;
-    }
-
-    .category-tag {
-      background: #374151;
-      color: #d1d5db;
     }
   }
 
   /* 响应式设计 */
   @media (max-width: 768px) {
+    .photography-grid {
+      gap: 1px;
+    }
+    
     .featured-grid,
     .all-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     }
 
-    .photography-item {
-      margin-bottom: 1rem;
-    }
-
-    .item-info {
+    /* 移动端保持可见 */
+    .image-overlay {
+      opacity: 1;
+      background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
       padding: 1rem;
     }
-  }
 
-  /* 加载动画 */
-  .photography-item {
-    animation: fadeInUp 0.6s ease-out;
-  }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
+    .overlay-content {
       transform: translateY(0);
+    }
+
+    .item-title-overlay {
+      font-size: 1rem;
     }
   }
 </style>

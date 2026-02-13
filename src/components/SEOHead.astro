@@ -14,30 +14,53 @@ export interface Props {
 }
 
 const {
-  title = SITE_TITLE,
-  description = SITE_DESCRIPTION,
-  image = '/placeholder-social.jpg',
+  title,
+  description,
+  image,
   type = 'website',
   publishedTime,
   modifiedTime,
   author = 'Sogud',
   tags = [],
   noindex = false
-} = Astro.props;
+} = Astro.props || {};
 
-const fullTitle = title === SITE_TITLE ? title : `${title} - ${SITE_TITLE}`;
-const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
+const finalTitle = title || SITE_TITLE || 'Sogud.me';
+const finalDescription = description || SITE_DESCRIPTION || '';
+const finalImage = image || '/placeholder-social.jpg';
+const finalTags = Array.isArray(tags) ? tags : [];
+
+const fullTitle = finalTitle === SITE_TITLE ? finalTitle : `${finalTitle} - ${SITE_TITLE}`;
+
+// 安全创建 canonicalURL
+let canonicalURL: URL;
+try {
+  const pathname = Astro.url?.pathname || '/';
+  canonicalURL = new URL(pathname, SITE_URL);
+} catch (error) {
+  console.error('Error creating canonical URL:', error);
+  canonicalURL = new URL('/', SITE_URL);
+}
+
+// 安全创建图片 URL
+function getImageUrl(imgPath: string): string {
+  try {
+    return new URL(imgPath, SITE_URL).toString();
+  } catch (error) {
+    return `${SITE_URL}${imgPath}`;
+  }
+}
 ---
 
 <!-- SEO 优化元数据 -->
 <title>{fullTitle}</title>
-<meta name="description" content={description} />
+<meta name="description" content={finalDescription} />
 <meta name="author" content={author} />
 
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 
 <!-- 关键词 -->
-{tags.length > 0 && <meta name="keywords" content={tags.join(', ')} />}
+{finalTags.length > 0 && <meta name="keywords" content={finalTags.join(', ')} />}
 
 <!-- 语言 -->
 <meta name="language" content="zh-CN" />
@@ -83,18 +106,18 @@ const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
 <link rel="dns-prefetch" href="//fonts.gstatic.com" />
 
 <!-- 规范链接 -->
-<link rel="canonical" href={canonicalURL} />
+<link rel="canonical" href={canonicalURL.toString()} />
 
 <!-- 备用语言 -->
-<link rel="alternate" hreflang="zh-CN" href={canonicalURL} />
-<link rel="alternate" hreflang="x-default" href={canonicalURL} />
+<link rel="alternate" hreflang="zh-CN" href={canonicalURL.toString()} />
+<link rel="alternate" hreflang="x-default" href={canonicalURL.toString()} />
 
 <!-- Open Graph 增强 -->
 <meta property="og:type" content={type} />
-<meta property="og:url" content={canonicalURL} />
+<meta property="og:url" content={canonicalURL.toString()} />
 <meta property="og:title" content={fullTitle} />
-<meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image, SITE_URL)} />
+<meta property="og:description" content={finalDescription} />
+<meta property="og:image" content={getImageUrl(finalImage)} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content={fullTitle} />
@@ -111,16 +134,16 @@ const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
 {type === 'article' && author && (
   <meta property="article:author" content={author} />
 )}
-{type === 'article' && tags.map(tag => (
+{type === 'article' && finalTags.map(tag => (
   <meta property="article:tag" content={tag} />
 ))}
 
 <!-- Twitter 增强 -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:url" content={canonicalURL} />
+<meta name="twitter:url" content={canonicalURL.toString()} />
 <meta name="twitter:title" content={fullTitle} />
-<meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={new URL(image, SITE_URL)} />
+<meta name="twitter:description" content={finalDescription} />
+<meta name="twitter:image" content={getImageUrl(finalImage)} />
 <meta name="twitter:image:alt" content={fullTitle} />
 <meta name="twitter:creator" content="@sogud" />
 <meta name="twitter:site" content="@sogud" />
@@ -130,8 +153,8 @@ const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
   "@context": "https://schema.org",
   "@type": type === 'article' ? "BlogPosting" : "WebSite",
   "headline": fullTitle,
-  "description": description,
-  "image": new URL(image, SITE_URL).toString(),
+  "description": finalDescription,
+  "image": getImageUrl(finalImage),
   "url": canonicalURL.toString(),
   "datePublished": publishedTime,
   "dateModified": modifiedTime || publishedTime,
@@ -150,7 +173,7 @@ const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
     "url": SITE_URL,
     "logo": {
       "@type": "ImageObject",
-      "url": new URL("/favicon.svg", SITE_URL).toString(),
+      "url": getImageUrl("/favicon.svg"),
       "width": 32,
       "height": 32
     }
@@ -160,10 +183,10 @@ const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
     "@id": canonicalURL.toString()
   },
   ...(type === 'article' && {
-    "keywords": tags.join(', '),
+    "keywords": finalTags.join(', '),
     "articleSection": "Technology",
     "inLanguage": "zh-CN",
-    "wordCount": description.length,
+    "wordCount": finalDescription.length,
     "isPartOf": {
       "@type": "Blog",
       "name": SITE_TITLE,
