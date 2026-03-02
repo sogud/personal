@@ -105,8 +105,6 @@ tmux capture-pane -t codex-dev -p
 
 ### 三位大哥分工
 
-可以参考刘小排的架构：
-
 | Agent | 模型 | 职责 |
 |-------|------|------|
 | **Claude Code** | Opus 4.6 | 写开发计划、写逻辑代码 |
@@ -123,7 +121,7 @@ tmux capture-pane -t codex-dev -p
 
 ### 真实案例
 
-最近开源的项目收到一个 issue 要求增加新功能：
+在一个开源项目中，收到 issue 要求增加新功能：
 
 ```
 用 tmux 里的 Codex 最强模型搞定这个 issue
@@ -133,9 +131,7 @@ Codex 完成后，OpenClaw（Opus 4.6）进行 Review：
 - 第一个建议：Codex 采纳，立即修改
 - 第二个建议：Codex 不采纳，但给出了合理理由，两者达成一致
 
-最终新功能上线。查看完整记录：
-- Issue 讨论：https://github.com/liuxiaopai-ai/raphael-publish/issues/1
-- PR 代码：https://github.com/liuxiaopai-ai/raphael-publish/pull/2
+最终新功能上线。这种协作模式让不同 Agent 发挥各自优势，产出更高质量的代码。
 
 ## 总结
 
