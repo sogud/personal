@@ -1,12 +1,11 @@
 import { generateText } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
-type Env = Record<string, never>;
+type ProviderId = 'openrouter' | 'openai' | 'deepseek' | 'groq' | 'mistral';
 
-type PagesFunction<Env> = (context: {
-  request: Request;
-  env: Env;
-}) => Response | Promise<Response>;
+type Env = {
+  ASSETS: Fetcher;
+};
 
 type ChatRequest = {
   message?: string;
@@ -15,7 +14,10 @@ type ChatRequest = {
   provider?: ProviderId;
 };
 
-type ProviderId = 'openrouter' | 'openai' | 'deepseek' | 'groq' | 'mistral';
+type OAuthRequest = {
+  code?: string;
+  codeVerifier?: string;
+};
 
 type ProviderConfig = {
   name: string;
@@ -56,7 +58,27 @@ const systemPrompt = [
   'Answer directly, avoid filler, and keep responses compact.',
 ].join(' ');
 
-export const onRequestPost: PagesFunction<Env> = async ({ request }) => {
+export default {
+  async fetch(request: Request, env: Env) {
+    const url = new URL(request.url);
+
+    if (url.pathname === '/api/ai/chat') {
+      return handleChat(request);
+    }
+
+    if (url.pathname === '/api/openrouter/oauth') {
+      return handleOpenRouterOAuth(request);
+    }
+
+    return env.ASSETS.fetch(request);
+  },
+};
+
+async function handleChat(request: Request) {
+  if (request.method !== 'POST') {
+    return json({ error: 'Use POST.' }, 405);
+  }
+
   let body: ChatRequest;
   try {
     body = await request.json();
@@ -75,7 +97,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request }) => {
   }
 
   const providerId = body.provider || 'openrouter';
-  const config = getProviderConfig(providerId);
+  const config = providers[providerId];
   if (!config) {
     return json({ error: 'Unsupported provider.' }, 400);
   }
@@ -109,11 +131,47 @@ export const onRequestPost: PagesFunction<Env> = async ({ request }) => {
     const message = error instanceof Error ? error.message : 'AI provider request failed.';
     return json({ error: message }, 502);
   }
-};
+}
 
-export const onRequest: PagesFunction<Env> = async () => {
-  return json({ error: 'Use POST.' }, 405);
-};
+async function handleOpenRouterOAuth(request: Request) {
+  if (request.method !== 'POST') {
+    return json({ error: 'Use POST.' }, 405);
+  }
+
+  let body: OAuthRequest;
+  try {
+    body = await request.json();
+  } catch (error) {
+    return json({ error: 'Invalid JSON request.' }, 400);
+  }
+
+  const code = body.code?.trim();
+  const codeVerifier = body.codeVerifier?.trim();
+  if (!code || !codeVerifier) {
+    return json({ error: 'OpenRouter code and code verifier are required.' }, 400);
+  }
+
+  const response = await fetch('https://openrouter.ai/api/v1/auth/keys', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      code,
+      code_verifier: codeVerifier,
+      code_challenge_method: 'S256',
+    }),
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    return json({
+      error: payload?.error || payload?.message || 'OpenRouter OAuth exchange failed.',
+    }, response.status);
+  }
+
+  return json({ key: payload?.key || '' });
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -123,8 +181,4 @@ function json(body: unknown, status = 200) {
       'Cache-Control': 'no-store',
     },
   });
-}
-
-function getProviderConfig(provider: ProviderId): ProviderConfig | null {
-  return providers[provider] || null;
 }
