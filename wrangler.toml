@@ -1,3 +1,6 @@
 name = "personal"
 compatibility_date = "2025-09-18"
-pages_build_output_dir = "./dist"
+
+# 静态站点部署配置
+[assets]
+directory = "./dist"
