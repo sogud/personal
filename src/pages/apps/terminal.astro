@@ -32,29 +32,35 @@ import { mediaFolders } from '../../data/mediaFolders';
           </div>
 
           <form class="retro-terminal-settings" data-terminal-settings>
-            <label>
-              Provider
-              <select data-terminal-provider>
-                <option value="openrouter">OpenRouter</option>
-                <option value="openai">OpenAI</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="groq">Groq</option>
-                <option value="mistral">Mistral</option>
-              </select>
-            </label>
-            <label>
-              Model
-              <input data-terminal-model autocomplete="off" placeholder="openai/gpt-4o-mini" />
-            </label>
-            <label>
-              API Key
-              <input data-terminal-key type="password" autocomplete="off" placeholder="user-owned key" />
-            </label>
             <div class="retro-terminal-auth">
               <button type="button" data-openrouter-login>OpenRouter Login</button>
-              <button type="button" data-openrouter-disconnect>clear</button>
               <span data-openrouter-status>not connected</span>
+              <button type="button" data-openrouter-disconnect aria-label="Clear OpenRouter session">clear</button>
             </div>
+
+            <details class="retro-terminal-more">
+              <summary>more</summary>
+              <div class="retro-terminal-more-panel">
+                <label>
+                  Provider
+                  <select data-terminal-provider>
+                    <option value="openrouter">OpenRouter</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="groq">Groq</option>
+                    <option value="mistral">Mistral</option>
+                  </select>
+                </label>
+                <label>
+                  Model
+                  <input data-terminal-model autocomplete="off" placeholder="openai/gpt-4o-mini" />
+                </label>
+                <label>
+                  API Key
+                  <input data-terminal-key type="password" autocomplete="off" placeholder="paste user-owned key" />
+                </label>
+              </div>
+            </details>
           </form>
 
           <div class="retro-terminal-screen" data-terminal-screen>
@@ -303,9 +309,15 @@ import { mediaFolders } from '../../data/mediaFolders';
         modelInput.addEventListener('input', saveSettings);
       }
 
-      if (openRouterLogin instanceof HTMLButtonElement) {
-        openRouterLogin.addEventListener('click', startOpenRouterLogin);
-      }
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const loginButton = target.closest('[data-openrouter-login]');
+        if (loginButton instanceof HTMLButtonElement) {
+          event.preventDefault();
+          startOpenRouterLogin();
+        }
+      });
 
       if (openRouterDisconnect instanceof HTMLButtonElement) {
         openRouterDisconnect.addEventListener('click', () => {

@@ -733,6 +733,13 @@ body {
   box-shadow: 0 1px 0 rgba(255,255,255,.4);
 }
 
+.retro-window.is-dragging,
+.retro-home-window.is-dragging {
+  z-index: 6;
+  cursor: grabbing;
+  user-select: none;
+}
+
 .retro-home-window {
   width: min(585px, calc(100vw - 220px));
   min-height: 500px;
@@ -770,6 +777,8 @@ body {
       rgba(0,0,0,.28) 3px
     ),
     #dbdbd5;
+  cursor: grab;
+  touch-action: none;
 }
 
 .retro-close {
@@ -1035,8 +1044,9 @@ body {
 }
 
 .retro-terminal-settings {
-  display: grid;
-  grid-template-columns: 120px 1fr 1fr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
   color: #d9d9d1;
@@ -1066,14 +1076,14 @@ body {
 }
 
 .retro-terminal-auth {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
+  display: flex;
   gap: 6px;
-  align-items: end;
+  align-items: center;
   min-width: 0;
 }
 
-.retro-terminal-auth button {
+.retro-terminal-auth button,
+.retro-terminal-more summary {
   border: 1px solid #f7f8f0;
   background: #050505;
   color: #f7f8f0;
@@ -1082,7 +1092,8 @@ body {
   padding: 5px 7px;
 }
 
-.retro-terminal-auth button:hover {
+.retro-terminal-auth button:hover,
+.retro-terminal-more summary:hover {
   background: #f7f8f0;
   color: #050505;
 }
@@ -1091,7 +1102,40 @@ body {
   color: #80ff9a;
   font-size: 10px;
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+
+.retro-terminal-more {
+  position: relative;
+}
+
+.retro-terminal-more summary {
+  display: block;
+  list-style: none;
+}
+
+.retro-terminal-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.retro-terminal-more-panel {
+  position: absolute;
+  z-index: 7;
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  gap: 8px;
+  width: min(520px, calc(100vw - 120px));
+  padding: 10px;
+  border: 1px solid #f7f8f0;
+  background: #151515;
+  box-shadow: 6px 6px 0 rgba(0,0,0,.45);
+}
+
+.retro-terminal-more-panel label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .retro-terminal-screen {
@@ -1450,15 +1494,19 @@ body {
   }
 
   .retro-terminal-settings {
-    grid-template-columns: 1fr;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .retro-terminal-auth {
-    grid-template-columns: 1fr auto;
+    justify-content: space-between;
   }
 
-  .retro-terminal-auth span {
-    grid-column: 1 / -1;
+  .retro-terminal-more-panel {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+    box-shadow: none;
   }
 
   .retro-terminal-screen {
