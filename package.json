@@ -11,11 +11,13 @@
 		"deploy": "npx wrangler pages deploy dist"
 	},
 	"dependencies": {
+		"@ai-sdk/openai-compatible": "^2.0.47",
 		"@astrojs/mdx": "^0.16.0",
 		"@astrojs/react": "^2.1.0",
 		"@astrojs/rss": "^2.1.0",
 		"@astrojs/sitemap": "^1.0.1",
 		"@astrojs/tailwind": "^3.1.0",
+		"ai": "^6.0.183",
 		"astro": "^2.0.9",
 		"autoprefixer": "^10.4.13",
 		"postcss": "^8.4.21",

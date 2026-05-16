@@ -1,0 +1,98 @@
+---
+import { ViewTransitions } from 'astro:transitions';
+import BaseHead from '../../components/BaseHead.astro';
+import RetroDesktop from '../../components/RetroDesktop.astro';
+import { SITE_TITLE } from '../../consts';
+import { getMediaFolder, mediaFolders } from '../../data/mediaFolders';
+
+export function getStaticPaths() {
+  return mediaFolders.map((folder) => ({
+    params: { slug: folder.slug },
+    props: { folder },
+  }));
+}
+
+const folder = Astro.props.folder ?? getMediaFolder(Astro.params.slug || '');
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead
+      title={`${folder.title} - ${SITE_TITLE}`}
+      description={folder.description}
+      type="website"
+    />
+    <ViewTransitions />
+  </head>
+  <body class="retro-body">
+    <RetroDesktop folders={mediaFolders} activeSlug={folder.slug} title={folder.title}>
+      <section class:list={['retro-window', `retro-window-${folder.kind}`]}>
+        <header class="retro-window-bar">
+          <button class="retro-close" type="button" data-retro-close aria-label="Close folder">x</button>
+          <span class="retro-window-title">{folder.title}</span>
+        </header>
+
+        <div class="retro-window-content">
+          <div class="retro-folder-head">
+            <p class="retro-folder-label">{folder.label}</p>
+            <h1>{folder.title}</h1>
+            <p>{folder.description}</p>
+          </div>
+
+          {folder.items.length > 0 ? (
+            <div class:list={['retro-media-grid', `is-${folder.kind}`]}>
+              {folder.items.map((item) => (
+                <article class="retro-media-item">
+                  {item.kind === 'text' && (
+                    <a class="retro-text-file" href={item.href || '#'}>
+                      <span class="retro-file-meta">{item.meta || 'txt'}</span>
+                      <strong>{item.title}</strong>
+                      {item.description && <p>{item.description}</p>}
+                    </a>
+                  )}
+
+                  {item.kind === 'image' && item.src && (
+                    <figure class="retro-image-file">
+                      <img src={item.src} alt={item.alt || item.title} loading="lazy" />
+                      <figcaption>
+                        <strong>{item.title}</strong>
+                        {item.description && <span>{item.description}</span>}
+                      </figcaption>
+                    </figure>
+                  )}
+
+                  {item.kind === 'video' && item.src && (
+                    <div class="retro-video-file">
+                      <video controls preload="metadata" poster={item.poster}>
+                        <source src={item.src} />
+                      </video>
+                      <strong>{item.title}</strong>
+                      {item.description && <p>{item.description}</p>}
+                    </div>
+                  )}
+
+                  {item.kind === 'audio' && item.src && (
+                    <div class="retro-audio-file">
+                      <div class="retro-audio-icon" aria-hidden="true">♪</div>
+                      <div>
+                        <strong>{item.title}</strong>
+                        {item.description && <p>{item.description}</p>}
+                        <audio controls preload="metadata" src={item.src}></audio>
+                      </div>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div class="retro-empty-folder">
+              <p>This folder is empty.</p>
+              <span>Add real {folder.label.toLowerCase()} files in <code>src/data/mediaFolders.ts</code>.</span>
+            </div>
+          )}
+        </div>
+      </section>
+    </RetroDesktop>
+  </body>
+</html>

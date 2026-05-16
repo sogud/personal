@@ -1,0 +1,49 @@
+---
+import { ViewTransitions } from 'astro:transitions';
+import BaseHead from '../components/BaseHead.astro';
+import RetroDesktop from '../components/RetroDesktop.astro';
+import { SITE_TITLE } from '../consts';
+import { mediaFolders } from '../data/mediaFolders';
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead
+      title={`System - ${SITE_TITLE}`}
+      description="System overview"
+      type="website"
+    />
+    <ViewTransitions />
+  </head>
+  <body class="retro-body">
+    <RetroDesktop folders={mediaFolders} title="System">
+      <section class="retro-window retro-about-window">
+        <header class="retro-window-bar">
+          <button class="retro-close" type="button" data-retro-close aria-label="Close system">x</button>
+          <span class="retro-window-title">System</span>
+        </header>
+
+        <div class="retro-window-content retro-about-content">
+          <div class="retro-about-title">
+            <h1>Desktop System</h1>
+            <p><strong>Mode:</strong> file browser <strong>Status:</strong> online</p>
+          </div>
+
+          <div class="retro-about-lines">
+            <p><strong>Folders:</strong> text, images, video, and audio files.</p>
+            <p><strong>Terminal:</strong> an AI chat surface with a real backend boundary.</p>
+            <p><strong>Rule:</strong> no generated placeholder replies when the AI backend is offline.</p>
+          </div>
+
+          <div class="retro-speech-layout">
+            <div class="retro-speech-bubble">
+              <p>This page only describes the desktop behavior. Personal profile and skills content has been removed from the interface.</p>
+            </div>
+            <img src="https://github.com/sogud.png" alt="" />
+          </div>
+        </div>
+      </section>
+    </RetroDesktop>
+  </body>
+</html>

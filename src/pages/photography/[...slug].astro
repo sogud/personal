@@ -6,7 +6,12 @@ import Sidebar from '../../components/Sidebar.astro';
 import PhotographyGallery from '../../components/PhotographyGallery.astro';
 
 export async function getStaticPaths() {
-  const photography = await getCollection('photography');
+  let photography = [];
+  try {
+    photography = await getCollection('photography');
+  } catch (error) {
+    photography = [];
+  }
 
   return photography.map((entry) => ({
     params: { slug: entry.slug },

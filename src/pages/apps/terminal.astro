@@ -1,0 +1,334 @@
+---
+import { ViewTransitions } from 'astro:transitions';
+import BaseHead from '../../components/BaseHead.astro';
+import RetroDesktop from '../../components/RetroDesktop.astro';
+import { SITE_TITLE } from '../../consts';
+import { mediaFolders } from '../../data/mediaFolders';
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead
+      title={`Terminal - ${SITE_TITLE}`}
+      description="AI terminal"
+      type="website"
+    />
+    <ViewTransitions />
+  </head>
+  <body class="retro-body">
+    <RetroDesktop folders={mediaFolders} title="Terminal">
+      <section class="retro-window retro-terminal-window">
+        <header class="retro-window-bar">
+          <button class="retro-close" type="button" data-retro-close aria-label="Close terminal">x</button>
+          <span class="retro-window-title">Terminal</span>
+        </header>
+
+        <div class="retro-window-content retro-terminal-content">
+          <div class="retro-terminal-chrome" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <form class="retro-terminal-settings" data-terminal-settings>
+            <label>
+              Provider
+              <select data-terminal-provider>
+                <option value="openrouter">OpenRouter</option>
+                <option value="openai">OpenAI</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="groq">Groq</option>
+                <option value="mistral">Mistral</option>
+              </select>
+            </label>
+            <label>
+              Model
+              <input data-terminal-model autocomplete="off" placeholder="openai/gpt-4o-mini" />
+            </label>
+            <label>
+              API Key
+              <input data-terminal-key type="password" autocomplete="off" placeholder="user-owned key" />
+            </label>
+            <div class="retro-terminal-auth">
+              <button type="button" data-openrouter-login>OpenRouter Login</button>
+              <button type="button" data-openrouter-disconnect>clear</button>
+              <span data-openrouter-status>not connected</span>
+            </div>
+          </form>
+
+          <div class="retro-terminal-screen" data-terminal-screen>
+            <div class="retro-terminal-lines" data-terminal-lines>
+              <p class="retro-terminal-line retro-terminal-system">
+                <span>system</span> BYOK proxy terminal ready.
+              </p>
+              <p class="retro-terminal-line retro-terminal-system">
+                <span>system</span> Bring your own provider key. This site only forwards requests.
+              </p>
+            </div>
+
+            <form class="retro-terminal-form" data-terminal-form>
+              <label class="retro-terminal-prompt" for="terminal-input">codex&gt;</label>
+              <input
+                id="terminal-input"
+                class="retro-terminal-input"
+                data-terminal-input
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Ask AI..."
+              />
+              <button class="retro-terminal-send" type="submit">send</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </RetroDesktop>
+
+    <script>
+      const form = document.querySelector('[data-terminal-form]');
+      const input = document.querySelector('[data-terminal-input]');
+      const lines = document.querySelector('[data-terminal-lines]');
+      const screen = document.querySelector('[data-terminal-screen]');
+      const providerInput = document.querySelector('[data-terminal-provider]');
+      const modelInput = document.querySelector('[data-terminal-model]');
+      const keyInput = document.querySelector('[data-terminal-key]');
+      const openRouterLogin = document.querySelector('[data-openrouter-login]');
+      const openRouterDisconnect = document.querySelector('[data-openrouter-disconnect]');
+      const openRouterStatus = document.querySelector('[data-openrouter-status]');
+
+      const providerDefaults = {
+        openrouter: 'openai/gpt-4o-mini',
+        openai: 'gpt-4o-mini',
+        deepseek: 'deepseek-chat',
+        groq: 'llama-3.1-8b-instant',
+        mistral: 'mistral-small-latest',
+      };
+
+      function readSettings() {
+        return {
+          provider: providerInput instanceof HTMLSelectElement ? providerInput.value : 'openrouter',
+          model: modelInput instanceof HTMLInputElement ? modelInput.value.trim() : '',
+          apiKey: keyInput instanceof HTMLInputElement ? keyInput.value.trim() : '',
+        };
+      }
+
+      function saveSettings() {
+        const settings = readSettings();
+        sessionStorage.setItem('retro-terminal-settings', JSON.stringify({
+          provider: settings.provider,
+          model: settings.model,
+        }));
+      }
+
+      function setOpenRouterStatus(text) {
+        if (openRouterStatus instanceof HTMLElement) {
+          openRouterStatus.textContent = text;
+        }
+      }
+
+      function loadSettings() {
+        const saved = sessionStorage.getItem('retro-terminal-settings');
+        if (!saved) return;
+
+        try {
+          const settings = JSON.parse(saved);
+          if (providerInput instanceof HTMLSelectElement && typeof settings.provider === 'string') {
+            providerInput.value = settings.provider;
+          }
+          if (modelInput instanceof HTMLInputElement && typeof settings.model === 'string') {
+            modelInput.value = settings.model;
+          }
+        } catch (error) {
+          sessionStorage.removeItem('retro-terminal-settings');
+        }
+      }
+
+      function syncProviderDefaults() {
+        if (!(providerInput instanceof HTMLSelectElement) || !(modelInput instanceof HTMLInputElement)) return;
+        if (!modelInput.value.trim()) {
+          modelInput.placeholder = providerDefaults[providerInput.value] || 'model-name';
+        }
+      }
+
+      function randomBase64URL(bytes) {
+        const array = new Uint8Array(bytes);
+        crypto.getRandomValues(array);
+        let binary = '';
+        for (const byte of array) {
+          binary += String.fromCharCode(byte);
+        }
+        return btoa(binary)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/g, '');
+      }
+
+      async function createCodeChallenge(verifier) {
+        const data = new TextEncoder().encode(verifier);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        let binary = '';
+        for (const byte of new Uint8Array(hash)) {
+          binary += String.fromCharCode(byte);
+        }
+        return btoa(binary)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/g, '');
+      }
+
+      async function startOpenRouterLogin() {
+        const verifier = randomBase64URL(64);
+        const challenge = await createCodeChallenge(verifier);
+        sessionStorage.setItem('openrouter-code-verifier', verifier);
+        sessionStorage.setItem('openrouter-callback-path', window.location.pathname);
+
+        const callbackURL = `${window.location.origin}${window.location.pathname}`;
+        const authURL = new URL('https://openrouter.ai/auth');
+        authURL.searchParams.set('callback_url', callbackURL);
+        authURL.searchParams.set('code_challenge', challenge);
+        authURL.searchParams.set('code_challenge_method', 'S256');
+        window.location.href = authURL.toString();
+      }
+
+      async function finishOpenRouterLogin() {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        if (!code) return;
+
+        const verifier = sessionStorage.getItem('openrouter-code-verifier');
+        if (!verifier) {
+          appendLine('system', 'error', 'OpenRouter login verifier is missing. Try logging in again.');
+          return;
+        }
+
+        setOpenRouterStatus('connecting...');
+        appendLine('system', 'auth', 'exchanging OpenRouter code ...');
+        try {
+          const response = await fetch('/api/openrouter/oauth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, codeVerifier: verifier }),
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || !payload.key) {
+            appendLine('system', 'error', payload.error || 'OpenRouter login failed.');
+            setOpenRouterStatus('not connected');
+            return;
+          }
+
+          if (providerInput instanceof HTMLSelectElement) {
+            providerInput.value = 'openrouter';
+          }
+          if (modelInput instanceof HTMLInputElement && !modelInput.value.trim()) {
+            modelInput.value = providerDefaults.openrouter;
+          }
+          if (keyInput instanceof HTMLInputElement) {
+            keyInput.value = payload.key;
+          }
+          sessionStorage.removeItem('openrouter-code-verifier');
+          saveSettings();
+          setOpenRouterStatus('connected');
+          appendLine('system', 'auth', 'OpenRouter connected with your account key.');
+        } catch (error) {
+          appendLine('system', 'error', 'OpenRouter login exchange is unavailable.');
+          setOpenRouterStatus('not connected');
+        } finally {
+          const cleanURL = `${window.location.origin}${window.location.pathname}`;
+          window.history.replaceState({}, document.title, cleanURL);
+        }
+      }
+
+      function appendLine(kind, label, text) {
+        if (!(lines instanceof HTMLElement)) return;
+        const row = document.createElement('p');
+        row.className = `retro-terminal-line retro-terminal-${kind}`;
+        const tag = document.createElement('span');
+        tag.textContent = label;
+        row.append(tag, ` ${text}`);
+        lines.append(row);
+        if (screen instanceof HTMLElement) {
+          screen.scrollTop = screen.scrollHeight;
+        }
+      }
+
+      async function submitMessage(message) {
+        const settings = readSettings();
+        if (!settings.apiKey) {
+          appendLine('system', 'error', 'Enter your own provider API key first.');
+          return;
+        }
+
+        saveSettings();
+        appendLine('user', 'you', message);
+        appendLine('system', 'net', 'connecting /api/ai/chat ...');
+
+        try {
+          const response = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message,
+              provider: settings.provider,
+              model: settings.model,
+              apiKey: settings.apiKey,
+            }),
+          });
+          const payload = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            appendLine('system', 'error', payload.error || 'AI backend is not configured.');
+            return;
+          }
+
+          appendLine('assistant', 'ai', payload.reply || 'Empty response.');
+        } catch (error) {
+          appendLine('system', 'error', 'AI backend is unavailable in this environment.');
+        }
+      }
+
+      loadSettings();
+      syncProviderDefaults();
+
+      if (providerInput instanceof HTMLSelectElement) {
+        providerInput.addEventListener('change', () => {
+          if (modelInput instanceof HTMLInputElement) {
+            modelInput.value = '';
+          }
+          syncProviderDefaults();
+          saveSettings();
+        });
+      }
+
+      if (modelInput instanceof HTMLInputElement) {
+        modelInput.addEventListener('input', saveSettings);
+      }
+
+      if (openRouterLogin instanceof HTMLButtonElement) {
+        openRouterLogin.addEventListener('click', startOpenRouterLogin);
+      }
+
+      if (openRouterDisconnect instanceof HTMLButtonElement) {
+        openRouterDisconnect.addEventListener('click', () => {
+          if (keyInput instanceof HTMLInputElement) {
+            keyInput.value = '';
+          }
+          sessionStorage.removeItem('openrouter-code-verifier');
+          setOpenRouterStatus('not connected');
+          appendLine('system', 'auth', 'OpenRouter key cleared from this session.');
+        });
+      }
+
+      finishOpenRouterLogin();
+
+      if (form instanceof HTMLFormElement && input instanceof HTMLInputElement) {
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const message = input.value.trim();
+          if (!message) return;
+          input.value = '';
+          submitMessage(message);
+        });
+      }
+    </script>
+  </body>
+</html>

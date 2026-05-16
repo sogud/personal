@@ -5,11 +5,16 @@ import Sidebar from '../../components/Sidebar.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import { getCollection } from 'astro:content';
 
-const posts = (await getCollection('blog', ({ data }) => {
-  return !data.draft;
-})).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
+let posts = [];
+try {
+  posts = (await getCollection('blog', ({ data }) => {
+    return !data.draft;
+  })).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+  );
+} catch (error) {
+  posts = [];
+}
 ---
 
 <!DOCTYPE html>

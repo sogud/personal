@@ -3,7 +3,12 @@ import { getCollection } from 'astro:content';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
 export async function get(context) {
-	const posts = await getCollection('blog');
+	let posts = [];
+	try {
+		posts = await getCollection('blog');
+	} catch (error) {
+		posts = [];
+	}
 	return rss({
 		title: SITE_TITLE,
 		description: SITE_DESCRIPTION,

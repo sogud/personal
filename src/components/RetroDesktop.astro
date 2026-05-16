@@ -1,0 +1,81 @@
+---
+import type { MediaFolder } from '../data/mediaFolders';
+
+type Props = {
+  folders: MediaFolder[];
+  activeSlug?: string;
+  title?: string;
+};
+
+const { folders, activeSlug, title = 'Bamboo OS' } = Astro.props;
+const currentTime = new Date().toLocaleTimeString('en-US', {
+  hour: '2-digit',
+  minute: '2-digit',
+});
+---
+
+<div class="retro-shell" data-retro-desktop>
+  <div class="retro-screen">
+    <header class="retro-menu-bar">
+      <a class="retro-avatar" href="/" aria-label="Home">
+        <img src="https://github.com/sogud.png" alt="" />
+      </a>
+      <a class="retro-menu-item retro-menu-strong" href="/">Files</a>
+      <a class="retro-menu-item" href="/folders/writing/">Writing</a>
+      <a class="retro-menu-item" href="/apps/terminal/">Terminal</a>
+      <a class="retro-menu-item" href="/about/">System</a>
+      <time class="retro-clock">{currentTime}</time>
+    </header>
+
+    <main class="retro-desktop" aria-label={title}>
+      <slot />
+    </main>
+
+    <nav class="retro-folder-dock" aria-label="Media folders">
+      {folders.map((folder) => (
+        <a
+          class:list={[
+            'retro-folder-link',
+            activeSlug === folder.slug && 'is-active',
+          ]}
+          href={`/folders/${folder.slug}/`}
+        >
+          <span class="retro-folder-icon" aria-hidden="true"></span>
+          <span class="retro-folder-name">{folder.title}</span>
+        </a>
+      ))}
+      <a
+        class:list={[
+          'retro-folder-link',
+          'retro-app-link',
+          title === 'Terminal' && 'is-active',
+        ]}
+        href="/apps/terminal/"
+      >
+        <span class="retro-terminal-icon" aria-hidden="true">$_</span>
+        <span class="retro-folder-name">Terminal</span>
+      </a>
+    </nav>
+
+    <div class="retro-crt-overlay" aria-hidden="true">
+      <div class="retro-crt-grid"></div>
+      <div class="retro-crt-soft"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const closeButton = target.closest('[data-retro-close]');
+    if (!(closeButton instanceof HTMLElement)) return;
+
+    const windowElement = closeButton.closest('.retro-window, .retro-home-window');
+    if (!(windowElement instanceof HTMLElement)) return;
+
+    event.preventDefault();
+    windowElement.setAttribute('hidden', '');
+  });
+</script>

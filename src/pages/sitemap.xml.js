@@ -1,14 +1,24 @@
 import { getCollection } from 'astro:content';
 
 export async function get(context) {
-  const posts = await getCollection('blog', ({ data }) => {
-    return !data.draft;
-  });
+  let posts = [];
+  try {
+    posts = await getCollection('blog', ({ data }) => {
+      return !data.draft;
+    });
+  } catch (error) {
+    posts = [];
+  }
 
   const staticPages = [
     '',
     '/about',
+    '/apps/terminal',
     '/blog',
+    '/folders/writing',
+    '/folders/images',
+    '/folders/videos',
+    '/folders/music',
   ];
 
   const urls = [

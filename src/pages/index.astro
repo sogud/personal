@@ -3,15 +3,21 @@ import { ViewTransitions } from 'astro:transitions';
 import BaseHead from '../components/BaseHead.astro';
 import SEOHead from '../components/SEOHead.astro';
 import PerformanceOptimizer from '../components/PerformanceOptimizer.astro';
-import Sidebar from '../components/Sidebar.astro';
+import RetroDesktop from '../components/RetroDesktop.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 import { getCollection } from 'astro:content';
+import { mediaFolders } from '../data/mediaFolders';
 
-const posts = (await getCollection('blog', ({ data }) => {
-  return !data.draft;
-}))
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-  .slice(0, 50);
+let posts = [];
+try {
+  posts = (await getCollection('blog', ({ data }) => {
+    return !data.draft;
+  }))
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+    .slice(0, 4);
+} catch (error) {
+  posts = [];
+}
 ---
 
 <!DOCTYPE html>
@@ -32,37 +38,57 @@ const posts = (await getCollection('blog', ({ data }) => {
     <PerformanceOptimizer />
     <ViewTransitions />
   </head>
-  <body>
-    <Sidebar />
-    <div class="layout">
-      <main class="main-content">
-        <section class="home-intro">
-          <h1>Hello, I'm bamboo.</h1>
-          <p>Software engineer building things for the web. Writing about frontend development, programming, and technology.</p>
-        </section>
-        
-        <section class="section">
-          <h2 class="section-title">Recent Writing</h2>
-          <ul class="item-list">
-            {posts.map((post) => (
-              <li class="item">
-                <h3 class="item-title">
-                  <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
-                </h3>
-                <p class="item-meta">
-                  <time datetime={post.data.pubDate.toISOString()}>
-                    {post.data.pubDate.toLocaleDateString('zh-CN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </time>
-                </p>
-              </li>
+  <body class="retro-body">
+    <RetroDesktop folders={mediaFolders} title="Bamboo OS">
+      <section class="retro-home-window">
+        <header class="retro-window-bar">
+          <button class="retro-close" type="button" data-retro-close aria-label="Close window">x</button>
+          <span class="retro-window-title">Bamboo OS</span>
+        </header>
+        <div class="retro-home-content">
+          <div class="retro-profile-card">
+            <img src="https://github.com/sogud.png" alt="" />
+            <div>
+              <p class="retro-folder-label">Desktop</p>
+              <h1>Files</h1>
+              <p>Text, images, video, music, and terminal apps.</p>
+            </div>
+          </div>
+
+          <div class="retro-home-folders" aria-label="Folder shortcuts">
+            {mediaFolders.map((folder) => (
+              <a class="retro-folder-tile" href={`/folders/${folder.slug}/`}>
+                <span class="retro-folder-icon" aria-hidden="true"></span>
+                <span>{folder.title}</span>
+                <small>{folder.label}</small>
+              </a>
             ))}
-          </ul>
-        </section>
-      </main>
-    </div>
+            <a class="retro-folder-tile" href="/apps/terminal/">
+              <span class="retro-terminal-icon" aria-hidden="true">$_</span>
+              <span>Terminal</span>
+              <small>AI</small>
+            </a>
+          </div>
+
+          <section class="retro-recent-panel">
+            <h2>Recent Writing</h2>
+            {posts.length > 0 ? (
+              <ul>
+                {posts.map((post) => (
+                  <li>
+                    <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {post.data.pubDate.toLocaleDateString('zh-CN')}
+                    </time>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No writing files found.</p>
+            )}
+          </section>
+        </div>
+      </section>
+    </RetroDesktop>
   </body>
 </html>
