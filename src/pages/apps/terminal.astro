@@ -53,12 +53,25 @@ import { mediaFolders } from '../../data/mediaFolders';
                 </label>
                 <label>
                   Model
-                  <input data-terminal-model autocomplete="off" placeholder="openai/gpt-4o-mini" />
+                  <input
+                    data-terminal-model
+                    autocomplete="off"
+                    list="openrouter-free-models"
+                    placeholder="deepseek/deepseek-v4-flash:free"
+                  />
+                  <datalist id="openrouter-free-models" data-openrouter-free-models></datalist>
                 </label>
                 <label>
                   API Key
                   <input data-terminal-key type="password" autocomplete="off" placeholder="paste user-owned key" />
                 </label>
+                <div class="retro-terminal-session-tools">
+                  <label>
+                    Session
+                    <select data-terminal-session></select>
+                  </label>
+                  <button type="button" data-terminal-new-session>new</button>
+                </div>
               </div>
             </details>
           </form>
@@ -74,11 +87,11 @@ import { mediaFolders } from '../../data/mediaFolders';
             </div>
 
             <form class="retro-terminal-form" data-terminal-form>
-              <label class="retro-terminal-prompt" for="terminal-input">codex&gt;</label>
               <input
                 id="terminal-input"
                 class="retro-terminal-input"
                 data-terminal-input
+                aria-label="Ask AI"
                 autocomplete="off"
                 spellcheck="false"
                 placeholder="Ask AI..."
@@ -101,9 +114,22 @@ import { mediaFolders } from '../../data/mediaFolders';
       const openRouterLogin = document.querySelector('[data-openrouter-login]');
       const openRouterDisconnect = document.querySelector('[data-openrouter-disconnect]');
       const openRouterStatus = document.querySelector('[data-openrouter-status]');
+      const openRouterFreeModels = document.querySelector('[data-openrouter-free-models]');
+      const sessionInput = document.querySelector('[data-terminal-session]');
+      const newSessionButton = document.querySelector('[data-terminal-new-session]');
+
+      const settingsKey = 'retro-terminal-settings';
+      const apiKeyKey = 'retro-terminal-api-key';
+      const sessionsKey = 'retro-terminal-sessions';
+      const activeSessionKey = 'retro-terminal-active-session';
+
+      const introLines = [
+        ['system', 'system', 'BYOK proxy terminal ready.'],
+        ['system', 'system', 'Bring your own provider key. This site only forwards requests.'],
+      ];
 
       const providerDefaults = {
-        openrouter: 'openai/gpt-4o-mini',
+        openrouter: 'deepseek/deepseek-v4-flash:free',
         openai: 'gpt-4o-mini',
         deepseek: 'deepseek-chat',
         groq: 'llama-3.1-8b-instant',
@@ -120,32 +146,49 @@ import { mediaFolders } from '../../data/mediaFolders';
 
       function saveSettings() {
         const settings = readSettings();
-        sessionStorage.setItem('retro-terminal-settings', JSON.stringify({
+        localStorage.setItem(settingsKey, JSON.stringify({
           provider: settings.provider,
           model: settings.model,
         }));
+        if (keyInput instanceof HTMLInputElement) {
+          sessionStorage.setItem(apiKeyKey, settings.apiKey);
+        }
       }
 
       function setOpenRouterStatus(text) {
         if (openRouterStatus instanceof HTMLElement) {
           openRouterStatus.textContent = text;
         }
+        if (openRouterLogin instanceof HTMLButtonElement) {
+          openRouterLogin.hidden = text === 'connected';
+        }
+        if (openRouterStatus instanceof HTMLElement) {
+          openRouterStatus.closest('.retro-terminal-auth')?.classList.toggle('is-connected', text === 'connected');
+        }
       }
 
       function loadSettings() {
-        const saved = sessionStorage.getItem('retro-terminal-settings');
-        if (!saved) return;
+        const saved = localStorage.getItem(settingsKey);
 
-        try {
-          const settings = JSON.parse(saved);
-          if (providerInput instanceof HTMLSelectElement && typeof settings.provider === 'string') {
-            providerInput.value = settings.provider;
+        if (saved) {
+          try {
+            const settings = JSON.parse(saved);
+            if (providerInput instanceof HTMLSelectElement && typeof settings.provider === 'string') {
+              providerInput.value = settings.provider;
+            }
+            if (modelInput instanceof HTMLInputElement && typeof settings.model === 'string') {
+              modelInput.value = settings.model;
+            }
+          } catch (error) {
+            localStorage.removeItem(settingsKey);
           }
-          if (modelInput instanceof HTMLInputElement && typeof settings.model === 'string') {
-            modelInput.value = settings.model;
+        }
+
+        if (keyInput instanceof HTMLInputElement) {
+          keyInput.value = sessionStorage.getItem(apiKeyKey) || '';
+          if (keyInput.value) {
+            setOpenRouterStatus('connected');
           }
-        } catch (error) {
-          sessionStorage.removeItem('retro-terminal-settings');
         }
       }
 
@@ -153,7 +196,119 @@ import { mediaFolders } from '../../data/mediaFolders';
         if (!(providerInput instanceof HTMLSelectElement) || !(modelInput instanceof HTMLInputElement)) return;
         if (!modelInput.value.trim()) {
           modelInput.placeholder = providerDefaults[providerInput.value] || 'model-name';
+          if (providerInput.value === 'openrouter') {
+            modelInput.value = providerDefaults.openrouter;
+          }
         }
+      }
+
+      async function loadOpenRouterFreeModels() {
+        if (!(modelInput instanceof HTMLInputElement) || !(openRouterFreeModels instanceof HTMLDataListElement)) return;
+
+        try {
+          const response = await fetch('/api/openrouter/free-models');
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || !Array.isArray(payload.models)) return;
+
+          openRouterFreeModels.innerHTML = '';
+          for (const model of payload.models.slice(0, 80)) {
+            if (!model?.id) continue;
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.label = model.name || model.id;
+            openRouterFreeModels.append(option);
+          }
+
+          const ids = payload.models.map((model) => model.id);
+          if (typeof ids[0] === 'string') {
+            providerDefaults.openrouter = ids[0];
+          }
+
+          if (providerInput instanceof HTMLSelectElement && providerInput.value === 'openrouter') {
+            const currentModel = modelInput.value.trim();
+            if (
+              !currentModel
+              || currentModel === 'openai/gpt-4o-mini'
+              || currentModel === 'deepseek/deepseek-v4-flash:free'
+            ) {
+              modelInput.value = providerDefaults.openrouter;
+              saveSettings();
+            }
+          }
+        } catch (error) {
+          // The static fallback model remains usable if the models endpoint is unreachable.
+        }
+      }
+
+      function createSession() {
+        return {
+          id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          title: 'new session',
+          createdAt: Date.now(),
+          messages: [],
+        };
+      }
+
+      function loadSessions() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(sessionsKey) || '[]');
+          if (Array.isArray(parsed) && parsed.length) {
+            return parsed;
+          }
+        } catch (error) {
+          localStorage.removeItem(sessionsKey);
+        }
+        const session = createSession();
+        localStorage.setItem(sessionsKey, JSON.stringify([session]));
+        localStorage.setItem(activeSessionKey, session.id);
+        return [session];
+      }
+
+      function saveSessions(sessions) {
+        localStorage.setItem(sessionsKey, JSON.stringify(sessions.slice(0, 20)));
+      }
+
+      function getActiveSession(sessions = loadSessions()) {
+        const activeId = localStorage.getItem(activeSessionKey);
+        return sessions.find((session) => session.id === activeId) || sessions[0];
+      }
+
+      function renderSessionSelect(sessions = loadSessions()) {
+        if (!(sessionInput instanceof HTMLSelectElement)) return;
+        const activeSession = getActiveSession(sessions);
+        sessionInput.innerHTML = '';
+        for (const session of sessions) {
+          const option = document.createElement('option');
+          option.value = session.id;
+          option.textContent = session.title || 'new session';
+          sessionInput.append(option);
+        }
+        sessionInput.value = activeSession.id;
+      }
+
+      function renderMessages() {
+        if (!(lines instanceof HTMLElement)) return;
+        const sessions = loadSessions();
+        const activeSession = getActiveSession(sessions);
+        lines.innerHTML = '';
+        for (const [kind, label, text] of introLines) {
+          appendLine(kind, label, text, false);
+        }
+        for (const message of activeSession.messages || []) {
+          appendLine(message.kind, message.label, message.text, false);
+        }
+      }
+
+      function persistMessage(kind, label, text) {
+        const sessions = loadSessions();
+        const activeSession = getActiveSession(sessions);
+        activeSession.messages = Array.isArray(activeSession.messages) ? activeSession.messages : [];
+        activeSession.messages.push({ kind, label, text });
+        if (activeSession.title === 'new session' && kind === 'user') {
+          activeSession.title = text.slice(0, 32) || 'new session';
+        }
+        saveSessions(sessions);
+        renderSessionSelect(sessions);
       }
 
       function randomBase64URL(bytes) {
@@ -208,7 +363,6 @@ import { mediaFolders } from '../../data/mediaFolders';
         }
 
         setOpenRouterStatus('connecting...');
-        appendLine('system', 'auth', 'exchanging OpenRouter code ...');
         try {
           const response = await fetch('/api/openrouter/oauth', {
             method: 'POST',
@@ -230,11 +384,11 @@ import { mediaFolders } from '../../data/mediaFolders';
           }
           if (keyInput instanceof HTMLInputElement) {
             keyInput.value = payload.key;
+            sessionStorage.setItem(apiKeyKey, payload.key);
           }
           sessionStorage.removeItem('openrouter-code-verifier');
           saveSettings();
           setOpenRouterStatus('connected');
-          appendLine('system', 'auth', 'OpenRouter connected with your account key.');
         } catch (error) {
           appendLine('system', 'error', 'OpenRouter login exchange is unavailable.');
           setOpenRouterStatus('not connected');
@@ -244,7 +398,7 @@ import { mediaFolders } from '../../data/mediaFolders';
         }
       }
 
-      function appendLine(kind, label, text) {
+      function appendLine(kind, label, text, persist = true) {
         if (!(lines instanceof HTMLElement)) return;
         const row = document.createElement('p');
         row.className = `retro-terminal-line retro-terminal-${kind}`;
@@ -255,6 +409,10 @@ import { mediaFolders } from '../../data/mediaFolders';
         if (screen instanceof HTMLElement) {
           screen.scrollTop = screen.scrollHeight;
         }
+        if (persist) {
+          persistMessage(kind, label, text);
+        }
+        return row;
       }
 
       async function submitMessage(message) {
@@ -266,7 +424,7 @@ import { mediaFolders } from '../../data/mediaFolders';
 
         saveSettings();
         appendLine('user', 'you', message);
-        appendLine('system', 'net', 'connecting /api/ai/chat ...');
+        const thinkingLine = appendLine('system', 'thinking', '...', false);
 
         try {
           const response = await fetch('/api/ai/chat', {
@@ -280,6 +438,7 @@ import { mediaFolders } from '../../data/mediaFolders';
             }),
           });
           const payload = await response.json().catch(() => ({}));
+          thinkingLine?.remove();
 
           if (!response.ok) {
             appendLine('system', 'error', payload.error || 'AI backend is not configured.');
@@ -288,12 +447,16 @@ import { mediaFolders } from '../../data/mediaFolders';
 
           appendLine('assistant', 'ai', payload.reply || 'Empty response.');
         } catch (error) {
+          thinkingLine?.remove();
           appendLine('system', 'error', 'AI backend is unavailable in this environment.');
         }
       }
 
       loadSettings();
+      loadOpenRouterFreeModels();
       syncProviderDefaults();
+      renderSessionSelect();
+      renderMessages();
 
       if (providerInput instanceof HTMLSelectElement) {
         providerInput.addEventListener('change', () => {
@@ -307,6 +470,29 @@ import { mediaFolders } from '../../data/mediaFolders';
 
       if (modelInput instanceof HTMLInputElement) {
         modelInput.addEventListener('input', saveSettings);
+      }
+
+      if (keyInput instanceof HTMLInputElement) {
+        keyInput.addEventListener('input', saveSettings);
+      }
+
+      if (sessionInput instanceof HTMLSelectElement) {
+        sessionInput.addEventListener('change', () => {
+          localStorage.setItem(activeSessionKey, sessionInput.value);
+          renderMessages();
+        });
+      }
+
+      if (newSessionButton instanceof HTMLButtonElement) {
+        newSessionButton.addEventListener('click', () => {
+          const sessions = loadSessions();
+          const session = createSession();
+          sessions.unshift(session);
+          saveSessions(sessions);
+          localStorage.setItem(activeSessionKey, session.id);
+          renderSessionSelect(sessions);
+          renderMessages();
+        });
       }
 
       document.addEventListener('click', (event) => {
@@ -324,9 +510,9 @@ import { mediaFolders } from '../../data/mediaFolders';
           if (keyInput instanceof HTMLInputElement) {
             keyInput.value = '';
           }
+          sessionStorage.removeItem(apiKeyKey);
           sessionStorage.removeItem('openrouter-code-verifier');
           setOpenRouterStatus('not connected');
-          appendLine('system', 'auth', 'OpenRouter key cleared from this session.');
         });
       }
 

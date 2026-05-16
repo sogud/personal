@@ -19,6 +19,15 @@ type OAuthRequest = {
   codeVerifier?: string;
 };
 
+type OpenRouterModel = {
+  id?: string;
+  name?: string;
+  pricing?: {
+    prompt?: string;
+    completion?: string;
+  };
+};
+
 type ProviderConfig = {
   name: string;
   baseURL: string;
@@ -29,7 +38,7 @@ const providers: Record<ProviderId, ProviderConfig> = {
   openrouter: {
     name: 'OpenRouter',
     baseURL: 'https://openrouter.ai/api/v1',
-    defaultModel: 'openai/gpt-4o-mini',
+    defaultModel: 'deepseek/deepseek-v4-flash:free',
   },
   openai: {
     name: 'OpenAI',
@@ -68,6 +77,10 @@ export default {
 
     if (url.pathname === '/api/openrouter/oauth') {
       return handleOpenRouterOAuth(request);
+    }
+
+    if (url.pathname === '/api/openrouter/free-models') {
+      return handleOpenRouterFreeModels();
     }
 
     return env.ASSETS.fetch(request);
@@ -171,6 +184,32 @@ async function handleOpenRouterOAuth(request: Request) {
   }
 
   return json({ key: payload?.key || '' });
+}
+
+async function handleOpenRouterFreeModels() {
+  const response = await fetch('https://openrouter.ai/api/v1/models', {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !Array.isArray(payload?.data)) {
+    return json({ models: [] }, response.ok ? 200 : response.status);
+  }
+
+  const models = payload.data
+    .filter((model: OpenRouterModel) => {
+      return model.id
+        && model.pricing?.prompt === '0'
+        && model.pricing?.completion === '0';
+    })
+    .map((model: OpenRouterModel) => ({
+      id: model.id as string,
+      name: model.name || model.id,
+    }));
+
+  return json({ models });
 }
 
 function json(body: unknown, status = 200) {
