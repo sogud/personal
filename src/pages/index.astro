@@ -56,6 +56,11 @@ try {
           </div>
 
           <div class="retro-home-folders" aria-label="Folder shortcuts">
+            <a class="retro-folder-tile" href="/blog/">
+              <span class="retro-folder-icon" aria-hidden="true"></span>
+              <span>Blog</span>
+              <small>All articles</small>
+            </a>
             {mediaFolders.map((folder) => (
               <a class="retro-folder-tile" href={`/folders/${folder.slug}/`}>
                 <span class="retro-folder-icon" aria-hidden="true"></span>
@@ -72,6 +77,7 @@ try {
 
           <section class="retro-recent-panel">
             <h2>Recent Writing</h2>
+            <a href="/blog/">View all articles →</a>
             {posts.length > 0 ? (
               <ul>
                 {posts.map((post) => (

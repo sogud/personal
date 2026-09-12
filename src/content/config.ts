@@ -18,6 +18,7 @@ const blog = defineCollection({
 		heroImage: z.string().optional(),
 		tags: z.array(z.string()).optional(),
 		excerpt: z.string().optional(),
+		author: z.string().default('Sogud'),
 	}),
 });
 

@@ -1,58 +1,93 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
 import BaseHead from '../../components/BaseHead.astro';
 import Sidebar from '../../components/Sidebar.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+import { SITE_TITLE } from '../../consts';
 import { getCollection } from 'astro:content';
 
-let posts = [];
-try {
-  posts = (await getCollection('blog', ({ data }) => {
-    return !data.draft;
-  })).sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-  );
-} catch (error) {
-  posts = [];
-}
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <BaseHead
-      title={`文章列表 - ${SITE_TITLE}`}
-      description="Alex Chen 的技术博客文章列表，分享前端开发、编程技巧和技术思考"
+      title={`Blog - ${SITE_TITLE}`}
+      description="Sogud 的文章归档，记录软件开发、技术实践和个人思考。"
       type="website"
     />
-    <ViewTransitions />
+    <link rel="alternate" type="application/rss+xml" title="Sogud Blog" href="/rss.xml" />
   </head>
   <body>
     <Sidebar />
     <div class="layout">
       <main class="main-content">
-        <section class="section">
-          <h2 class="section-title">All Writing</h2>
+        <header class="home-intro">
+          <a class="back-to-blog" href="/">← Back to desktop</a>
+          <h1>Blog</h1>
+          <p>软件开发、技术实践，以及一些个人思考。</p>
+          <p class="item-meta">{posts.length} articles · <a href="/rss.xml">RSS</a></p>
+        </header>
+        <section class="section" aria-label="Articles">
+          <label class="section-title" for="article-search">Find an article</label>
+          <input id="article-search" type="search" placeholder="搜索标题、摘要或标签" />
           <ul class="item-list">
             {posts.map((post) => (
-              <li class="item">
-                <h3 class="item-title">
+              <li class="item" data-article data-search={[post.data.title, post.data.description, ...(post.data.tags ?? [])].join(' ').toLocaleLowerCase()}>
+                <h2 class="item-title">
                   <a href={`/blog/${post.slug}/`}>{post.data.title}</a>
-                </h3>
+                </h2>
+                <p class="item-description">{post.data.description}</p>
                 <p class="item-meta">
-                  <time datetime={post.data.pubDate.toISOString()}>
-                    {post.data.pubDate.toLocaleDateString('zh-CN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </time>
+                  {post.data.pubDate.getUTCFullYear() > 1970 ? (
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {post.data.pubDate.toLocaleDateString('zh-CN', { timeZone: 'UTC' })}
+                    </time>
+                  ) : <span>历史文章</span>}
+                  {(post.data.tags ?? []).map(tag => <span class="article-tag">{tag}</span>)}
                 </p>
               </li>
             ))}
           </ul>
+          <p id="no-articles" role="status" hidden={posts.length > 0}>没有找到文章，试试其他关键词。</p>
         </section>
       </main>
     </div>
   </body>
 </html>
+
+<script>
+  const search = document.querySelector<HTMLInputElement>('#article-search');
+  const articles = document.querySelectorAll<HTMLElement>('[data-article]');
+  const empty = document.querySelector<HTMLElement>('#no-articles');
+  search?.addEventListener('input', () => {
+    const query = search.value.trim().toLocaleLowerCase();
+    let visible = 0;
+    articles.forEach(article => {
+      article.hidden = !article.dataset.search?.includes(query);
+      if (!article.hidden) visible++;
+    });
+    if (empty) empty.hidden = visible > 0;
+  });
+</script>
+
+<style>
+  #article-search {
+    display: block;
+    width: 100%;
+    margin: 0.75rem 0 2rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font: inherit;
+  }
+  #article-search:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .article-tag { margin-left: 0.75rem; }
+  .home-intro .item-meta { margin-top: 1rem; font-size: 13px; }
+  a { color: var(--color-accent); }
+</style>

@@ -1,18 +1,16 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import { ViewTransitions } from 'astro:transitions';
 import BaseHead from '../components/BaseHead.astro';
 import Sidebar from '../components/Sidebar.astro';
 import BackToTop from '../components/BackToTop.astro';
 import ReadingProgress from '../components/ReadingProgress.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<'blog'>['data'] & {
+  headings: { depth: number; slug: string; text: string }[];
+};
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
-
-// 获取文章内容以提取标题
-const { headings } = await Astro.props.render?.() || { headings: [] };
+const { title, description, pubDate, updatedDate, heroImage, headings, tags = [], author } = Astro.props;
 ---
 
 <html lang="zh-CN">
@@ -24,9 +22,9 @@ const { headings } = await Astro.props.render?.() || { headings: [] };
       publishedTime={pubDate.toISOString()}
       modifiedTime={updatedDate?.toISOString()}
       image={heroImage}
-      tags={['技术', '编程', '前端', '全栈开发']}
+      tags={tags}
+      author={author}
     />
-    <ViewTransitions />
   </head>
   <body>
     <ReadingProgress />
@@ -34,7 +32,9 @@ const { headings } = await Astro.props.render?.() || { headings: [] };
     <div class="layout">
       <main class="main-content">
         <article class="blog-post">
+          <a class="back-to-blog" href="/blog/">← All articles</a>
           <h1>{title}</h1>
+          <p class="item-description">{description}</p>
           <div class="meta">
             <time datetime={pubDate.toISOString()}>
               {pubDate.toLocaleDateString('zh-CN', {

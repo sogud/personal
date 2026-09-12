@@ -5,7 +5,8 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 export async function get(context) {
 	let posts = [];
 	try {
-		posts = await getCollection('blog');
+		posts = (await getCollection('blog', ({ data }) => !data.draft))
+			.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 	} catch (error) {
 		posts = [];
 	}

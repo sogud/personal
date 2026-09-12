@@ -5,7 +5,7 @@ import BlogPost from '../../layouts/BlogPost.astro';
 export async function getStaticPaths() {
 	let posts = [];
 	try {
-		posts = await getCollection('blog');
+		posts = await getCollection('blog', ({ data }) => !data.draft);
 	} catch (error) {
 		posts = [];
 	}
@@ -21,6 +21,5 @@ const { Content, headings } = await post.render();
 ---
 
 <BlogPost {...post.data} headings={headings}>
-	<h1>{post.data.title}</h1>
 	<Content />
 </BlogPost>
