@@ -488,6 +488,7 @@ _binarSearchTree.remove(8)
 _binarSearchTree.inOrderTraverse()
 ```
 
+```html
 <script>
 export default {
   mounted(){
@@ -687,3 +688,4 @@ export default {
   }
 }
 </script>
+```

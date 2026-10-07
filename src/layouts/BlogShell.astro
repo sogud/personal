@@ -1,0 +1,79 @@
+---
+import BaseHead, { type Props as HeadProps } from '../components/BaseHead.astro';
+import '../styles/blog.css';
+
+type Props = HeadProps & { reading?: boolean };
+const { reading = false, ...metadata } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <script is:inline>
+      try {
+        const theme = localStorage.getItem('sogud-blog-theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.blogTheme = theme;
+        if (localStorage.getItem('sogud-blog-large-text') === 'true') document.documentElement.dataset.largeText = 'true';
+      } catch {}
+    </script>
+    <BaseHead {...metadata} />
+    <link rel="alternate" type="application/rss+xml" title="Sogud Blog" href="/rss.xml" />
+  </head>
+  <body class="blog-shell">
+    <a class="skip-link" href="#main">跳到正文</a>
+    <header class="blog-header">
+      <div class="blog-header-inner">
+        <a class="blog-brand" href="/" aria-label="Sogud，返回桌面">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5h7l2 2h9v13H3Z" /></svg>
+          <span>Sogud<span class="brand-section"> / Writing</span></span>
+        </a>
+        <nav class="blog-nav" aria-label="主导航">
+          <a href="/">桌面</a>
+          <a href="/blog/" aria-current={reading ? 'location' : 'page'}>文章</a>
+          <a href="/rss.xml">RSS</a>
+        </nav>
+        <div class="reading-controls">
+          {reading && <button type="button" data-font-toggle aria-pressed="false" title="切换大字号" hidden>大字</button>}
+          <button type="button" data-theme-toggle title="切换明暗主题" hidden>深色</button>
+        </div>
+      </div>
+    </header>
+    <slot />
+    <footer class="blog-footer"><span>Sogud · 写下值得再读的东西。</span><a href="/">返回桌面 ↗</a></footer>
+  </body>
+</html>
+
+<script>
+  const root = document.documentElement;
+  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+  const themeButton = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const fontButton = document.querySelector<HTMLButtonElement>('[data-font-toggle]');
+
+  function updateControls() {
+    const isDark = root.dataset.blogTheme === 'dark' || (!root.dataset.blogTheme && systemTheme.matches);
+    if (themeButton) {
+      themeButton.textContent = isDark ? '浅色' : '深色';
+      themeButton.setAttribute('aria-label', isDark ? '切换到浅色主题' : '切换到深色主题');
+      themeButton.hidden = false;
+    }
+    if (fontButton) {
+      fontButton.setAttribute('aria-pressed', String(root.dataset.largeText === 'true'));
+      fontButton.hidden = false;
+    }
+  }
+
+  themeButton?.addEventListener('click', () => {
+    const isDark = root.dataset.blogTheme === 'dark' || (!root.dataset.blogTheme && systemTheme.matches);
+    root.dataset.blogTheme = isDark ? 'light' : 'dark';
+    try { localStorage.setItem('sogud-blog-theme', root.dataset.blogTheme); } catch {}
+    updateControls();
+  });
+  fontButton?.addEventListener('click', () => {
+    const isLarge = root.dataset.largeText !== 'true';
+    root.dataset.largeText = String(isLarge);
+    try { localStorage.setItem('sogud-blog-large-text', String(isLarge)); } catch {}
+    updateControls();
+  });
+  systemTheme.addEventListener('change', updateControls);
+  updateControls();
+</script>

@@ -1,67 +1,44 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
-import Sidebar from '../components/Sidebar.astro';
+import BlogShell from './BlogShell.astro';
 import BackToTop from '../components/BackToTop.astro';
 import ReadingProgress from '../components/ReadingProgress.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 
 type Props = CollectionEntry<'blog'>['data'] & {
   headings: { depth: number; slug: string; text: string }[];
+  readingMinutes: number;
+  nextPost?: { title: string; href: string };
 };
-
-const { title, description, pubDate, updatedDate, heroImage, headings, tags = [], author } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, headings, tags = [], author, readingMinutes, nextPost } = Astro.props;
+const hasToc = headings.some(heading => heading.depth >= 2 && heading.depth <= 4);
+const hasDate = pubDate.getUTCFullYear() > 1970;
 ---
 
-<html lang="zh-CN">
-  <head>
-    <BaseHead 
-      title={`${title} - Sogud.me`}
-      description={description}
-      type="article"
-      publishedTime={pubDate.toISOString()}
-      modifiedTime={updatedDate?.toISOString()}
-      image={heroImage}
-      tags={tags}
-      author={author}
-    />
-  </head>
-  <body>
-    <ReadingProgress />
-    <Sidebar />
-    <div class="layout">
-      <main class="main-content">
-        <article class="blog-post">
-          <a class="back-to-blog" href="/blog/">← All articles</a>
+<BlogShell title={`${title} - Sogud.me`} description={description} type="article" publishedTime={hasDate ? pubDate.toISOString() : undefined} modifiedTime={updatedDate?.toISOString()} image={heroImage} tags={tags} author={author} reading>
+  <ReadingProgress />
+  <main id="main" class="reader-main">
+    <a class="reader-back" href="/blog/">← 全部文章</a>
+    <div class:list={['reader-grid', { 'without-toc': !hasToc }]}>
+      <article class="blog-post">
+        <header class="post-header">
           <h1>{title}</h1>
-          <p class="item-description">{description}</p>
-          <div class="meta">
-            <time datetime={pubDate.toISOString()}>
-              {pubDate.toLocaleDateString('zh-CN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </time>
-            {updatedDate && (
-              <span> · 更新于 
-                <time datetime={updatedDate?.toISOString()}>
-                  {updatedDate?.toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </time>
-              </span>
-            )}
+          <p class="post-description">{description}</p>
+          <div class="post-meta">
+            <span>{author}</span>
+            {hasDate ? <time datetime={pubDate.toISOString()}>{pubDate.toLocaleDateString('zh-CN', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</time> : <span>历史文章 · 日期待考</span>}
+            <span>约 {readingMinutes} 分钟阅读</span>
+            {updatedDate && <span>更新于 <time datetime={updatedDate.toISOString()}>{updatedDate.toLocaleDateString('zh-CN', { timeZone: 'UTC' })}</time></span>}
           </div>
-          <TableOfContents headings={headings} />
-          <div class="content">
-            <slot />
-          </div>
-        </article>
-      </main>
+        </header>
+        <div class="content" data-reading-content><slot /></div>
+        <footer class="post-end">
+          {nextPost && <><p class="post-end-label">继续阅读</p><a class="next-article" href={nextPost.href}>{nextPost.title} ↗</a></>}
+          <a class="reader-back" href="/blog/">← 返回文章列表</a>
+        </footer>
+      </article>
+      {hasToc && <aside class="reader-toc" aria-label="文章目录"><TableOfContents headings={headings} /></aside>}
     </div>
-    <BackToTop />
-  </body>
-</html>
+  </main>
+  <BackToTop />
+</BlogShell>

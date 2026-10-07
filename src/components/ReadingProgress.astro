@@ -1,48 +1,28 @@
----
----
-
-<div id="reading-progress" class="reading-progress">
-  <div class="reading-progress-bar"></div>
-</div>
+<div class="reading-progress" aria-hidden="true"><div class="reading-progress-bar"></div></div>
 
 <script>
-  // 使用 requestAnimationFrame 实现高性能滚动监听
-  (function() {
-    const progressBar = document.querySelector('.reading-progress-bar');
-    if (!progressBar) return;
-
+  const progressBar = document.querySelector<HTMLElement>('.reading-progress-bar');
+  const content = document.querySelector<HTMLElement>('[data-reading-content]');
+  if (progressBar && content) {
     let ticking = false;
-    let article = null;
-
     function updateProgress() {
-      if (!article) {
-        article = document.querySelector('article');
-        if (!article) {
-          ticking = false;
-          return;
-        }
-      }
-
-      const articleTop = article.offsetTop;
-      const articleHeight = article.offsetHeight;
-      const windowHeight = window.innerHeight;
-      const scrollTop = window.scrollY;
-
-      const articleBottom = articleTop + articleHeight - windowHeight;
-      const progress = Math.max(0, Math.min(100, ((scrollTop - articleTop) / (articleBottom - articleTop)) * 100));
-
-      progressBar.style.width = `${progress}%`;
+      const rect = content!.getBoundingClientRect();
+      const start = window.scrollY + rect.top - 100;
+      const end = window.scrollY + rect.bottom - window.innerHeight;
+      let progress = rect.bottom <= window.innerHeight ? 100 : 0;
+      if (end > start) progress = Math.max(0, Math.min(100, (window.scrollY - start) / (end - start) * 100));
+      progressBar!.style.width = `${progress}%`;
       ticking = false;
     }
-
     window.addEventListener('scroll', () => {
-      if (!ticking) {
-        requestAnimationFrame(updateProgress);
-        ticking = true;
-      }
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateProgress);
     }, { passive: true });
-
-    // 初始更新
+    window.addEventListener('resize', updateProgress);
+    // Images and font-size changes can alter the reading height without scrolling.
+    const observer = new ResizeObserver(updateProgress);
+    observer.observe(content);
     updateProgress();
-  })();
+  }
 </script>

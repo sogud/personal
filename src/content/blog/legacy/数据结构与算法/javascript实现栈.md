@@ -95,6 +95,7 @@ function baseConverter(decNumber,base){
 }
 ```
 
+```html
 <script>
 export default {
   mounted () {
@@ -152,3 +153,4 @@ export default {
   }
 }
 </script>
+```

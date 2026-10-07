@@ -1,25 +1,29 @@
 ---
-import { CollectionEntry, getCollection } from 'astro:content';
+import { type CollectionEntry, getCollection } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 
 export async function getStaticPaths() {
-	let posts = [];
-	try {
-		posts = await getCollection('blog', ({ data }) => !data.draft);
-	} catch (error) {
-		posts = [];
-	}
-	return posts.map((post) => ({
-		params: { slug: post.slug },
-		props: post,
-	}));
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const paths = [];
+  for (let index = 0; index < posts.length; index++) {
+    const post = posts[index];
+    const next = posts[index + 1];
+    const nextPost = next ? { title: next.data.title, href: `/blog/${next.slug}/` } : undefined;
+    paths.push({ params: { slug: post.slug }, props: { ...post, nextPost } });
+  }
+  return paths;
 }
-type Props = CollectionEntry<'blog'>;
 
+type Props = CollectionEntry<'blog'> & { nextPost?: { title: string; href: string } };
 const post = Astro.props;
 const { Content, headings } = await post.render();
+const prose = post.body.replace(/```[\s\S]*?```/g, '');
+const chineseCharacters = prose.match(/[\u3400-\u9fff]/g)?.length ?? 0;
+const englishWords = prose.match(/[a-zA-Z]+/g)?.length ?? 0;
+const readingMinutes = Math.max(1, Math.ceil(chineseCharacters / 400 + englishWords / 220));
 ---
 
-<BlogPost {...post.data} headings={headings}>
-	<Content />
+<BlogPost {...post.data} headings={headings} readingMinutes={readingMinutes} nextPost={post.nextPost}>
+  <Content />
 </BlogPost>
